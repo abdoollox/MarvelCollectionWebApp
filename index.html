@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Marvel Kolleksiya</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c11;
+  --bg2:#11151d;
+  --card:#161b25;
+  --line:#242c3a;
+  --text:#eef1f6;
+  --dim:#8b93a3;
+  --accent:#ed1d24;
+  --accent-soft:rgba(237,29,36,.14);
+  --ok:#2ecc71;
+  --radius:16px;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:14px;
+  line-height:1.45;
+  overscroll-behavior-y:none;
+}
+
+.shell{max-width:560px;margin:0 auto;padding:0 14px 40px}
+.screen{animation:fade .22s ease}
+.hidden{display:none!important}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- Sarlavha ---------- */
+
+.top{
+  position:sticky;top:0;z-index:20;
+  background:var(--bg);
+  padding:14px 0 10px;
+}
+/* Sarlavha ostidagi yumshoq chegara — kartalar keskin kesilmasin */
+.top::after{
+  content:"";position:absolute;left:0;right:0;top:100%;height:14px;
+  background:linear-gradient(180deg,var(--bg),rgba(10,12,17,0));
+  pointer-events:none;
+}
+.top-row{display:flex;align-items:center;gap:10px}
+.brand{
+  font-weight:800;font-size:19px;letter-spacing:-.4px;
+  display:flex;align-items:center;gap:8px;flex:1;min-width:0;
+}
+.brand-mark{
+  background:var(--accent);color:#fff;
+  padding:3px 8px;border-radius:6px;
+  font-size:13px;font-weight:800;letter-spacing:.5px;
+  flex:none;
+}
+.icon-btn{
+  flex:none;width:38px;height:38px;border-radius:12px;
+  background:var(--card);border:1px solid var(--line);
+  color:var(--text);font-size:15px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;overflow:hidden;padding:0;
+}
+.icon-btn img{width:100%;height:100%;object-fit:cover}
+
+/* ---------- Progress ---------- */
+
+.prog{margin-top:12px}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.prog-lbl{font-size:12px;color:var(--dim);font-weight:600}
+.prog-val{font-size:12px;font-weight:700}
+.prog-val b{color:var(--accent);font-size:14px}
+.bar{height:5px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.bar span{
+  display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#ed1d24,#ff6b35);
+  transition:width .45s cubic-bezier(.4,0,.2,1);
+}
+
+/* ---------- Keyingi film ---------- */
+
+.next{
+  display:flex;gap:12px;align-items:center;
+  background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:12px;margin-top:16px;
+}
+.next-art{
+  width:52px;height:74px;border-radius:9px;flex:none;
+  background:linear-gradient(155deg,#2a3140,#12161e);
+  background-size:cover;background-position:center;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:#4a5468;font-size:16px;
+}
+.next-body{flex:1;min-width:0}
+.next-kick{font-size:10px;letter-spacing:1.1px;color:var(--accent);font-weight:800}
+.next-title{font-weight:700;font-size:15px;margin:2px 0 3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.next-sub{font-size:12px;color:var(--dim)}
+.next-play{
+  flex:none;background:var(--accent);color:#fff;border:none;
+  border-radius:11px;padding:10px 14px;font-size:13px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+
+/* ---------- Filtr ---------- */
+
+.filters{display:flex;gap:7px;margin:18px 0 4px}
+.chip{
+  flex:1;padding:8px 6px;border-radius:11px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--dim);
+  font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  transition:all .18s;
+}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--text)}
+
+/* ---------- Bo'limlar ---------- */
+
+.saga{
+  margin:26px 0 4px;padding-bottom:8px;
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:9px;
+}
+.saga-name{font-size:16px;font-weight:800;letter-spacing:-.3px}
+.saga-count{font-size:11px;color:var(--dim);font-weight:600}
+
+.phase{
+  margin:20px 0 10px;
+  display:flex;align-items:center;gap:9px;
+}
+.phase-name{font-size:12px;font-weight:800;color:var(--dim);letter-spacing:.8px}
+.phase-line{flex:1;height:1px;background:var(--line)}
+.phase-done{font-size:11px;color:var(--dim);font-weight:600}
+
+/* ---------- Kartalar ---------- */
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+.card{
+  position:relative;border-radius:var(--radius);overflow:hidden;
+  background:var(--card);border:1px solid var(--line);
+  cursor:pointer;transition:transform .16s,border-color .16s;
+}
+.card:active{transform:scale(.975)}
+.card.seen{border-color:rgba(46,204,113,.35)}
+
+.art{
+  position:relative;width:100%;aspect-ratio:2/3;
+  background:linear-gradient(155deg,#2a3140,#12161e);
+  background-size:cover;background-position:center;
+  display:flex;align-items:center;justify-content:center;
+}
+.art-num{font-size:34px;font-weight:800;color:rgba(255,255,255,.09)}
+.art::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(10,12,17,.92));
+}
+.card.seen .art{filter:saturate(.55) brightness(.72)}
+
+.tick{
+  position:absolute;top:8px;right:8px;z-index:2;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(10,12,17,.72);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--dim);
+}
+.card.seen .tick{background:var(--ok);border-color:var(--ok);color:#0a0c11;font-weight:800}
+
+.meta{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:9px 10px}
+.meta-title{
+  font-size:12.5px;font-weight:700;line-height:1.25;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.meta-sub{font-size:10.5px;color:var(--dim);margin-top:2px;font-weight:600}
+
+.soon{
+  position:absolute;top:8px;left:8px;z-index:2;
+  background:rgba(10,12,17,.78);border:1px solid var(--line);
+  border-radius:6px;padding:2px 6px;
+  font-size:9.5px;font-weight:700;color:var(--dim);letter-spacing:.4px;
+}
+
+.empty{text-align:center;color:var(--dim);padding:50px 20px;font-size:13px}
+
+/* ---------- Profil ---------- */
+
+.panel{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:15px;margin-top:14px;
+}
+.panel-h{
+  font-size:11px;letter-spacing:1px;color:var(--dim);font-weight:800;
+  margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline;
+}
+.panel-cnt{letter-spacing:0;font-size:11px}
+.panel-cnt.full{color:var(--ok)}
+
+.prof-top{display:flex;align-items:center;gap:13px;margin-top:16px}
+.prof-face{
+  width:56px;height:56px;border-radius:17px;flex:none;overflow:hidden;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:21px;font-weight:800;
+}
+.prof-face img{width:100%;height:100%;object-fit:cover}
+.prof-name{font-size:17px;font-weight:700}
+.prof-sub{font-size:12.5px;color:var(--dim);margin-top:1px}
+
+.back-btn{
+  background:var(--card);border:1px solid var(--line);color:var(--text);
+  border-radius:11px;padding:8px 13px;font-family:inherit;
+  font-size:13px;font-weight:700;cursor:pointer;
+}
+.danger{
+  width:100%;margin-top:14px;background:transparent;
+  border:1px solid var(--line);color:var(--dim);
+  border-radius:12px;padding:11px;font-family:inherit;
+  font-size:12.5px;font-weight:700;cursor:pointer;
+}
+
+/* ---------- Nishonlar ---------- */
+
+.badge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+
+.badge{
+  position:relative;aspect-ratio:1;border-radius:14px;
+  background:var(--bg2);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:6px 4px;cursor:pointer;
+  font-family:inherit;color:var(--dim);
+  transition:transform .16s;
+}
+.badge:active{transform:scale(.94)}
+.badge-ico{font-size:25px;line-height:1;filter:grayscale(1);opacity:.4}
+.badge-nm{
+  font-size:10px;font-weight:700;text-align:center;line-height:1.2;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.badge-cnt{font-size:9px;font-weight:700;opacity:.75}
+/* Nishon uchun kerakli film hali kanalga qo'shilmagan */
+.badge-soon{position:absolute;top:6px;right:7px;font-size:9px;opacity:.5}
+
+.badge.got{color:var(--text)}
+.badge.got .badge-ico{filter:none;opacity:1}
+.badge.got.t-common{border-color:#5b6b8c;background:rgba(91,107,140,.14)}
+.badge.got.t-rare{border-color:var(--accent);background:var(--accent-soft)}
+.badge.got.t-epic{border-color:#9b59b6;background:rgba(155,89,182,.16)}
+.badge.got.t-legend{
+  border-color:#f0b429;background:rgba(240,180,41,.16);
+  box-shadow:0 0 15px rgba(240,180,41,.26);
+}
+
+/* Katalogdagi "yangi nishon" tasmasi */
+.unlock{
+  display:flex;align-items:center;gap:11px;width:100%;
+  background:linear-gradient(135deg,rgba(240,180,41,.17),rgba(237,29,36,.09));
+  border:1px solid rgba(240,180,41,.45);
+  border-radius:var(--radius);padding:11px 12px;margin-top:14px;
+  color:var(--text);font-family:inherit;text-align:left;cursor:pointer;
+}
+.unlock-ico{font-size:24px;flex:none}
+.unlock-kick{display:block;font-size:9.5px;letter-spacing:1.1px;color:#f0b429;font-weight:800}
+.unlock-nm{display:block;font-weight:700;font-size:14px;margin-top:1px}
+
+/* Nishon varag'i (pastdan chiqadi) */
+.sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.62)}
+.sheet{
+  position:relative;width:100%;max-width:560px;margin:0 auto;
+  background:var(--bg2);border-top:1px solid var(--line);
+  border-radius:22px 22px 0 0;padding:22px 16px 26px;
+  max-height:84vh;overflow-y:auto;
+  animation:up .24s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sheet-ico{
+  width:64px;height:64px;border-radius:20px;margin:0 auto;
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  background:var(--card);border:1px solid var(--line);
+}
+.sheet-nm{text-align:center;font-size:18px;font-weight:800;margin-top:12px;letter-spacing:-.3px}
+.sheet-ds{text-align:center;font-size:13px;color:var(--dim);margin-top:4px}
+.sheet-list{margin-top:18px}
+.sheet-left{text-align:center;font-size:12px;color:var(--dim);font-weight:700;margin-top:14px}
+.sheet-close{
+  width:100%;margin-top:16px;background:var(--card);
+  border:1px solid var(--line);color:var(--text);
+  border-radius:13px;padding:12px;font-family:inherit;
+  font-size:14px;font-weight:700;cursor:pointer;
+}
+
+.film-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;
+}
+.film-row:last-child{border-bottom:none}
+.film-row.todo{cursor:pointer}
+.film-row.done{color:var(--dim)}
+.film-mark{
+  width:20px;height:20px;border-radius:50%;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;background:var(--card);color:var(--dim);
+  border:1px solid var(--line);
+}
+.film-row.done .film-mark{background:var(--ok);border-color:var(--ok);color:#0a0c11;font-weight:800}
+.film-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.film-go{font-size:11px;color:var(--accent);font-weight:700;flex:none}
+.film-soon{font-size:10px;color:var(--dim);font-weight:700;flex:none;opacity:.75}
+.sheet-note{
+  text-align:center;font-size:11.5px;color:var(--dim);
+  margin-top:10px;line-height:1.4;
+}
+
+/* ---------- Til tanlash ---------- */
+
+.lang-head{text-align:center;padding:56px 0 26px}
+.lang-title{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.lang-sub{font-size:13px;color:var(--dim);margin-top:6px}
+.lang-list{display:flex;flex-direction:column;gap:10px}
+.lang-btn{
+  display:flex;align-items:center;gap:12px;width:100%;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:14px;
+  color:var(--text);font-family:inherit;font-size:15px;font-weight:700;
+  cursor:pointer;
+}
+.lang-mark{
+  width:38px;height:38px;border-radius:11px;flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ============ TIL TANLASH (bir nechta til bo'lganda ko'rinadi) ============ -->
+  <div id="scr-lang" class="screen hidden">
+    <div class="lang-head">
+      <div class="lang-title">Tilni tanlang</div>
+      <div class="lang-sub">Keyin ham o'zgartirishingiz mumkin</div>
+    </div>
+    <div class="lang-list" id="lang-list"></div>
+  </div>
+
+  <!-- ============ KATALOG ============ -->
+  <div id="scr-cat" class="screen hidden">
+
+    <div class="top">
+      <div class="top-row">
+        <div class="brand"><span class="brand-mark">MARVEL</span> Kolleksiya</div>
+        <button class="icon-btn" id="avatar-btn" aria-label="Profil"></button>
+      </div>
+
+      <div class="prog">
+        <div class="prog-top">
+          <span class="prog-lbl" id="prog-lbl">Ko'rilgan filmlar</span>
+          <span class="prog-val"><b id="prog-done">0</b> / <span id="prog-total">0</span></span>
+        </div>
+        <div class="bar"><span id="prog-fill"></span></div>
+      </div>
+    </div>
+
+    <div class="next hidden" id="next-box">
+      <div class="next-art" id="next-art"></div>
+      <div class="next-body">
+        <div class="next-kick">KEYINGI FILM</div>
+        <div class="next-title" id="next-title"></div>
+        <div class="next-sub" id="next-sub"></div>
+      </div>
+      <button class="next-play" id="next-play">▶</button>
+    </div>
+
+    <button class="unlock hidden" id="unlock-strip">
+      <span class="unlock-ico" id="unlock-ico"></span>
+      <span>
+        <span class="unlock-kick">YANGI NISHON</span>
+        <span class="unlock-nm" id="unlock-nm"></span>
+      </span>
+    </button>
+
+    <div class="filters">
+      <button class="chip on" data-f="all">Hammasi</button>
+      <button class="chip" data-f="new">Ko'rilmagan</button>
+      <button class="chip" data-f="seen">Ko'rilgan</button>
+    </div>
+
+    <div id="catalog-body"></div>
+    <div class="empty hidden" id="cat-empty"></div>
+  </div>
+
+  <!-- ============ PROFIL ============ -->
+  <div id="scr-prof" class="screen hidden">
+    <div class="top">
+      <div class="top-row">
+        <button class="back-btn" id="prof-back">‹ Ortga</button>
+      </div>
+    </div>
+
+    <div class="prof-top">
+      <div class="prof-face" id="prof-face"></div>
+      <div>
+        <div class="prof-name" id="prof-name"></div>
+        <div class="prof-sub" id="prof-sub"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span>SAGALAR</span><span class="panel-cnt" id="cnt-saga"></span></div>
+      <div class="badge-grid" id="grid-saga"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span>FAZALAR</span><span class="panel-cnt" id="cnt-phase"></span></div>
+      <div class="badge-grid" id="grid-phase"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span>QAHRAMONLAR</span><span class="panel-cnt" id="cnt-hero"></span></div>
+      <div class="badge-grid" id="grid-hero"></div>
+    </div>
+
+    <button class="danger" id="reset-btn">Belgilarni tozalash</button>
+  </div>
+
+</div>
+
+<div class="sheet-wrap hidden" id="sheet">
+  <div class="sheet-bg" id="sheet-bg"></div>
+  <div class="sheet">
+    <div class="sheet-ico" id="sheet-ico"></div>
+    <div class="sheet-nm" id="sheet-nm"></div>
+    <div class="sheet-ds" id="sheet-ds"></div>
+    <div class="sheet-list" id="sheet-list"></div>
+    <div class="sheet-left" id="sheet-left"></div>
+    <div class="sheet-note hidden" id="sheet-note"></div>
+    <button class="sheet-close" id="sheet-close">Yopish</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
+
+  var BOT = "marvelkinobot";          // @ siz — .env dagi BOT_USERNAME bilan bir xil
+  var KEY = "marvel_watched";
+  var LANG_KEY = "marvel_lang";
+  var BADGE_KEY = "marvel_badges_seen";   // qaysi nishonlar allaqachon nishonlangan
+
+  /* ---------------------------------------------------------------
+     KATALOG
+     catalog.py bilan id orqali bog'langan. Yangi film qo'shilganda
+     ikkala faylga ham qo'shiladi — id bir xil bo'lishi SHART.
+     `ready:false` — film hali kanalga yuklanmagan (karta bosilmaydi).
+  --------------------------------------------------------------- */
+
+  var SAGAS = [
+    { id: "infinity",   name: "Cheksizlik sagasi",  phases: [1, 2, 3] },
+    { id: "multiverse", name: "Multikoinot sagasi", phases: [4, 5, 6] }
+  ];
+
+  var PHASE_NAME = { 1:"1-FAZA", 2:"2-FAZA", 3:"3-FAZA", 4:"4-FAZA", 5:"5-FAZA", 6:"6-FAZA" };
+
+  var MOVIES = [
+    { id:"im1",      n:1,  p:1, y:2008, uz:"Temir odam" },
+    { id:"hulk",     n:2,  p:1, y:2008, uz:"Aql bovar qilmas Halk" },
+    { id:"im2",      n:3,  p:1, y:2010, uz:"Temir odam 2" },
+    { id:"thor1",    n:4,  p:1, y:2011, uz:"Tor" },
+    { id:"ca1",      n:5,  p:1, y:2011, uz:"Kapitan Amerika: Birinchi qasoskor" },
+    { id:"av1",      n:6,  p:1, y:2012, uz:"Qasoskorlar" },
+
+    { id:"im3",      n:7,  p:2, y:2013, uz:"Temir odam 3" },
+    { id:"thor2",    n:8,  p:2, y:2013, uz:"Tor: Qorong'u olam" },
+    { id:"ca2",      n:9,  p:2, y:2014, uz:"Kapitan Amerika: Qish askari" },
+    { id:"gotg1",    n:10, p:2, y:2014, uz:"Galaktika qo'riqchilari" },
+    { id:"av2",      n:11, p:2, y:2015, uz:"Qasoskorlar: Ultron davri" },
+    { id:"antman1",  n:12, p:2, y:2015, uz:"Chumoli-odam" },
+
+    { id:"ca3",      n:13, p:3, y:2016, uz:"Kapitan Amerika: Fuqarolar urushi" },
+    { id:"ds1",      n:14, p:3, y:2016, uz:"Doktor Streyndj" },
+    { id:"gotg2",    n:15, p:3, y:2017, uz:"Galaktika qo'riqchilari 2" },
+    { id:"sm1",      n:16, p:3, y:2017, uz:"O'rgimchak-odam: Uyga qaytish" },
+    { id:"thor3",    n:17, p:3, y:2017, uz:"Tor: Ragnaryok" },
+    { id:"bp1",      n:18, p:3, y:2018, uz:"Qora Panter" },
+    { id:"av3",      n:19, p:3, y:2018, uz:"Qasoskorlar: Cheksizlik urushi" },
+    { id:"antman2",  n:20, p:3, y:2018, uz:"Chumoli-odam va Ari" },
+    { id:"cm1",      n:21, p:3, y:2019, uz:"Kapitan Marvel" },
+    { id:"av4",      n:22, p:3, y:2019, uz:"Qasoskorlar: Final" },
+    { id:"sm2",      n:23, p:3, y:2019, uz:"O'rgimchak-odam: Uydan uzoqda" },
+
+    { id:"bw",       n:24, p:4, y:2021, uz:"Qora Beva" },
+    { id:"shangchi", n:25, p:4, y:2021, uz:"Shang-Chi va o'n uzuk afsonasi" },
+    { id:"eternals", n:26, p:4, y:2021, uz:"Abadiylar" },
+    { id:"sm3",      n:27, p:4, y:2021, uz:"O'rgimchak-odam: Uyga yo'l yo'q" },
+    { id:"ds2",      n:28, p:4, y:2022, uz:"Doktor Streyndj: Telbalik multikoinoti" },
+    { id:"thor4",    n:29, p:4, y:2022, uz:"Tor: Sevgi va momaqaldiroq" },
+    { id:"bp2",      n:30, p:4, y:2022, uz:"Qora Panter: Vakanda abadiy" },
+
+    { id:"antman3",  n:31, p:5, y:2023, uz:"Chumoli-odam va Ari: Kvantomaniya" },
+    { id:"gotg3",    n:32, p:5, y:2023, uz:"Galaktika qo'riqchilari 3" },
+    { id:"marvels",  n:33, p:5, y:2023, uz:"Marvellar" },
+    { id:"dpw",      n:34, p:5, y:2024, uz:"Dedpul va Volverin" },
+    { id:"ca4",      n:35, p:5, y:2025, uz:"Kapitan Amerika: Yangi dunyo" },
+    { id:"tbolts",   n:36, p:5, y:2025, uz:"Momaqaldiroqlar*" },
+
+    { id:"ff4",      n:37, p:6, y:2025, uz:"Fantastik to'rtlik: Birinchi qadamlar" },
+    { id:"sm4",      n:38, p:6, y:2026, uz:"O'rgimchak-odam: Yangi kun" }
+  ];
+
+  // Hali kanalga yuklanmagan filmlar. Bo'sh bo'lsa — hammasi tayyor.
+  // catalog.py da message_id=0 bo'lganlar shu yerga yoziladi.
+  // Hozir: Cheksizlik sagasi (23 film) tayyor, Multikoinot sagasi yo'q.
+  var NOT_READY = {
+    // 4-Faza
+    bw: true, shangchi: true, eternals: true, sm3: true,
+    ds2: true, thor4: true, bp2: true,
+    // 5-Faza
+    antman3: true, gotg3: true, marvels: true,
+    dpw: true, ca4: true, tbolts: true,
+    // 6-Faza
+    ff4: true, sm4: true
+  };
+
+  // Tillar. Ikkinchisi qo'shilganda til tanlash ekrani o'zi paydo bo'ladi.
+  var LANGS = [
+    { code: "uz", name: "O'zbekcha", flag: "🇺🇿", grad: "linear-gradient(135deg,#0099b5,#1eb53a)" }
+  ];
+
+  /* ---------------------------------------------------------------
+     HOLAT
+  --------------------------------------------------------------- */
+
+  var lang = "uz";
+  var watched = {};
+  var cloudOk = false;
+  var filter = "all";
+
+  function $(id) { return document.getElementById(id); }
+
+  // Progress har til uchun alohida: kalit "uz:im1" ko'rinishida
+  function key(id) { return lang + ":" + id; }
+
+  function seen(id) { return !!watched[key(id)]; }
+
+  function list() {
+    var out = [];
+    for (var k in watched) { if (watched[k]) { out.push(k); } }
+    return out;
+  }
+
+  function ready(id) { return !NOT_READY[id]; }
+
+  /* ---------------------------------------------------------------
+     SAQLASH — uch qatlam:
+       1) localStorage — sinxron, ekran kutmaydi
+       2) CloudStorage — qurilmalararo, 1200 ms timeout bilan
+       3) server       — yo'q (bu loyihada kerak emas)
+  --------------------------------------------------------------- */
+
+  function hasCloud() {
+    try {
+      return !!(tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast("6.9"));
+    } catch (e) { return false; }
+  }
+
+  function absorb(arr) {
+    for (var i = 0; i < arr.length; i++) { if (arr[i]) { watched[arr[i]] = true; } }
+  }
+
+  function readLocal() {
+    try {
+      var raw = window.localStorage.getItem(KEY);
+      return raw ? raw.split(",") : [];
+    } catch (e) { return []; }
+  }
+
+  function writeLocal() {
+    try { window.localStorage.setItem(KEY, list().join(",")); } catch (e) {}
+  }
+
+  function validLang(v) {
+    for (var i = 0; i < LANGS.length; i++) { if (LANGS[i].code === v) { return v; } }
+    return null;
+  }
+
+  function readLocalLang() {
+    try { return validLang(window.localStorage.getItem(LANG_KEY)); }
+    catch (e) { return null; }
+  }
+
+  function saveLang(code) {
+    lang = code;
+    try { window.localStorage.setItem(LANG_KEY, code); } catch (e) {}
+    if (!cloudOk) { return; }
+    try { tg.CloudStorage.setItem(LANG_KEY, code, function () {}); } catch (e) {}
+  }
+
+  // Bulut kechiksa ham ilova ochilaveradi
+  function load(done) {
+    var localLang = readLocalLang();
+    if (!hasCloud()) { done(localLang); return; }
+    cloudOk = true;
+
+    var fired = false;
+    function once(l) { if (!fired) { fired = true; done(l); } }
+    setTimeout(function () { once(localLang); }, 1200);
+
+    try {
+      tg.CloudStorage.getItems([KEY, LANG_KEY, BADGE_KEY], function (err, vals) {
+        var l = localLang;
+        if (!err && vals) {
+          if (vals[KEY]) { absorb(vals[KEY].split(",")); writeLocal(); }
+          // Nishon xotirasi bulutdan kelsa — boshqa qurilmada ochilgan
+          // nishon bu yerda qaytadan "yangi" bo'lib chiqmaydi
+          if (typeof vals[BADGE_KEY] === "string") {
+            try { window.localStorage.setItem(BADGE_KEY, vals[BADGE_KEY]); } catch (e2) {}
+          }
+          var cl = validLang(vals[LANG_KEY]);
+          if (!l && cl) {
+            l = cl;
+            try { window.localStorage.setItem(LANG_KEY, cl); } catch (e) {}
+          }
+        }
+        once(l);
+      });
+    } catch (e) { once(localLang); }
+  }
+
+  function persist(cb) {
+    writeLocal();
+    if (!cloudOk) { if (cb) { cb(); } return; }
+
+    var fired = false;
+    function once() { if (!fired) { fired = true; if (cb) { cb(); } } }
+    setTimeout(once, 1200);
+
+    try { tg.CloudStorage.setItem(KEY, list().join(","), once); }
+    catch (e) { once(); }
+  }
+
+  /* ---------------------------------------------------------------
+     HARAKATLAR
+  --------------------------------------------------------------- */
+
+  function haptic(kind) {
+    try {
+      if (!tg || !tg.HapticFeedback) { return; }
+      if (kind === "select") { tg.HapticFeedback.selectionChanged(); }
+      else { tg.HapticFeedback.impactOccurred("light"); }
+    } catch (e) {}
+  }
+
+  function toggle(id) {
+    var k = key(id);
+    if (watched[k]) { delete watched[k]; } else { watched[k] = true; }
+    haptic("select");
+    persist();
+    renderCatalog();
+  }
+
+  // Kartaga bosilganda tasdiq so'raladi — tasodifiy teginishdan himoya
+  function askPlay(id, title) {
+    var msg = '"' + title + '" filmini ochamizmi?';
+    if (tg && tg.showConfirm) {
+      tg.showConfirm(msg, function (ok) { if (ok) { play(id); } });
+      return;
+    }
+    var ok = true;
+    try { if (window.confirm) { ok = window.confirm(msg); } } catch (e) {}
+    if (ok) { play(id); }
+  }
+
+  function play(id) {
+    var link = "https://t.me/" + BOT + "?start=" + id + "_" + lang;
+    watched[key(id)] = true;
+    renderCatalog();
+    // Belgi saqlangach botga o'tamiz — yozib ulgurmasdan yopilmasin
+    persist(function () {
+      if (tg && tg.openTelegramLink) { tg.openTelegramLink(link); tg.close(); }
+      else { window.open(link, "_blank"); }
+    });
+  }
+
+  function poster(id) { return "img/" + id + ".jpg"; }
+
+  function nextMovie() {
+    for (var i = 0; i < MOVIES.length; i++) {
+      if (!seen(MOVIES[i].id) && ready(MOVIES[i].id)) { return MOVIES[i]; }
+    }
+    return null;
+  }
+
+  function countSeen(arr) {
+    var c = 0;
+    for (var i = 0; i < arr.length; i++) { if (seen(arr[i].id)) { c++; } }
+    return c;
+  }
+
+  function inPhase(p) {
+    return MOVIES.filter(function (m) { return m.p === p; });
+  }
+
+  /* ---------------------------------------------------------------
+     CHIZISH
+  --------------------------------------------------------------- */
+
+  function setArt(el, m) {
+    var img = new Image();
+    img.onload = function () {
+      el.style.backgroundImage = 'url("' + poster(m.id) + '")';
+      el.innerHTML = "";
+    };
+    img.src = poster(m.id);
+  }
+
+  function cardEl(m) {
+    var card = document.createElement("div");
+    card.className = "card" + (seen(m.id) ? " seen" : "");
+
+    var art = document.createElement("div");
+    art.className = "art";
+
+    var num = document.createElement("span");
+    num.className = "art-num";
+    num.textContent = m.n;
+    art.appendChild(num);
+    setArt(art, m);
+
+    if (!ready(m.id)) {
+      var soon = document.createElement("span");
+      soon.className = "soon";
+      soon.textContent = "TEZ ORADA";
+      art.appendChild(soon);
+    }
+
+    var tick = document.createElement("button");
+    tick.className = "tick";
+    tick.textContent = seen(m.id) ? "✓" : "○";
+    tick.setAttribute("aria-label", "Ko'rilgan deb belgilash");
+    tick.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toggle(m.id);
+    });
+    art.appendChild(tick);
+
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var t = document.createElement("div");
+    t.className = "meta-title";
+    t.textContent = m[lang] || m.uz;
+    var s = document.createElement("div");
+    s.className = "meta-sub";
+    s.textContent = m.n + " • " + m.y;
+    meta.appendChild(t);
+    meta.appendChild(s);
+
+    card.appendChild(art);
+    card.appendChild(meta);
+
+    card.addEventListener("click", function () {
+      if (!ready(m.id)) {
+        if (tg && tg.showAlert) { tg.showAlert("Bu film tez orada qo'shiladi."); }
+        return;
+      }
+      askPlay(m.id, m[lang] || m.uz);
+    });
+
+    return card;
+  }
+
+  function passesFilter(m) {
+    if (filter === "new") { return !seen(m.id); }
+    if (filter === "seen") { return seen(m.id); }
+    return true;
+  }
+
+  function renderCards() {
+    var body = $("catalog-body");
+    body.innerHTML = "";
+    var shown = 0;
+
+    SAGAS.forEach(function (saga) {
+      var sagaMovies = MOVIES.filter(function (m) {
+        return saga.phases.indexOf(m.p) !== -1;
+      });
+      var visible = sagaMovies.filter(passesFilter);
+      if (!visible.length) { return; }
+
+      var head = document.createElement("div");
+      head.className = "saga";
+      var nm = document.createElement("span");
+      nm.className = "saga-name";
+      nm.textContent = saga.name;
+      var ct = document.createElement("span");
+      ct.className = "saga-count";
+      ct.textContent = countSeen(sagaMovies) + " / " + sagaMovies.length;
+      head.appendChild(nm);
+      head.appendChild(ct);
+      body.appendChild(head);
+
+      saga.phases.forEach(function (p) {
+        var all = inPhase(p);
+        var vis = all.filter(passesFilter);
+        if (!vis.length) { return; }
+
+        var ph = document.createElement("div");
+        ph.className = "phase";
+        var pn = document.createElement("span");
+        pn.className = "phase-name";
+        pn.textContent = PHASE_NAME[p];
+        var line = document.createElement("span");
+        line.className = "phase-line";
+        var pd = document.createElement("span");
+        pd.className = "phase-done";
+        pd.textContent = countSeen(all) + "/" + all.length;
+        ph.appendChild(pn);
+        ph.appendChild(line);
+        ph.appendChild(pd);
+        body.appendChild(ph);
+
+        var grid = document.createElement("div");
+        grid.className = "grid";
+        vis.forEach(function (m) { grid.appendChild(cardEl(m)); shown++; });
+        body.appendChild(grid);
+      });
+    });
+
+    var empty = $("cat-empty");
+    if (shown) {
+      empty.classList.add("hidden");
+    } else {
+      empty.classList.remove("hidden");
+      empty.textContent = filter === "seen"
+        ? "Hali birorta film belgilanmagan."
+        : "Hamma filmlar ko'rilgan. Zo'r!";
+    }
+  }
+
+  function renderProgress() {
+    var done = countSeen(MOVIES);
+    $("prog-done").textContent = done;
+    $("prog-total").textContent = MOVIES.length;
+    $("prog-fill").style.width = (MOVIES.length ? (done / MOVIES.length * 100) : 0) + "%";
+  }
+
+  function renderNext() {
+    var box = $("next-box");
+    var m = nextMovie();
+
+    // Filtrda "ko'rilgan" tanlanganda tavsiya o'rinsiz
+    if (!m || filter === "seen") { box.classList.add("hidden"); return; }
+    box.classList.remove("hidden");
+
+    var art = $("next-art");
+    art.style.backgroundImage = "";
+    art.textContent = m.n;
+    setArt(art, m);
+
+    $("next-title").textContent = m[lang] || m.uz;
+    $("next-sub").textContent = PHASE_NAME[m.p] + " • " + m.y;
+    $("next-play").onclick = function () { askPlay(m.id, m[lang] || m.uz); };
+  }
+
+  function renderCatalog() {
+    renderProgress();
+    renderNext();
+    renderCards();
+    syncBadges();
+  }
+
+  /* ---------------------------------------------------------------
+     NISHONLAR
+
+     Hammasi belgilangan filmlar to'plamidan hisoblanadi — server ham,
+     qo'shimcha ma'lumot ham kerak emas. Nishon bir vaqtning o'zida
+     TAVSIYA: varaqni ochgan odam qaysi film yetishmayotganini ko'radi.
+
+     tier: common | rare | epic | legend  (faqat rangga ta'sir qiladi)
+     Shart uch xil beriladi: films[] | phase | saga
+  --------------------------------------------------------------- */
+
+  var BADGES = [
+    // --- Qahramon yo'llari ---
+    { id:"ironman", icon:"🔴", tier:"rare",   name:"Temir yurak",
+      desc:"Temir odam yo'lining hammasi", films:["im1","im2","im3"] },
+    { id:"thor",    icon:"⚡", tier:"rare",   name:"Momaqaldiroq xudosi",
+      desc:"Tor yo'lining hammasi", films:["thor1","thor2","thor3","thor4"] },
+    { id:"cap",     icon:"🔵", tier:"rare",   name:"Vatan qalqoni",
+      desc:"Kapitan Amerika yo'lining hammasi", films:["ca1","ca2","ca3","ca4"] },
+    { id:"spidey",  icon:"🕷", tier:"rare",   name:"Mahalla qahramoni",
+      desc:"O'rgimchak-odam yo'lining hammasi", films:["sm1","sm2","sm3","sm4"] },
+    { id:"gotg",    icon:"🚀", tier:"rare",   name:"Galaktika sayohati",
+      desc:"Galaktika qo'riqchilarining hammasi", films:["gotg1","gotg2","gotg3"] },
+    { id:"antman",  icon:"🐜", tier:"rare",   name:"Kvant olami",
+      desc:"Chumoli-odam yo'lining hammasi", films:["antman1","antman2","antman3"] },
+    { id:"panther", icon:"🐆", tier:"common", name:"Vakanda abadiy",
+      desc:"Qora Panter yo'lining hammasi", films:["bp1","bp2"] },
+    { id:"strange", icon:"🔮", tier:"common", name:"Sehr ustasi",
+      desc:"Doktor Streyndj yo'lining hammasi", films:["ds1","ds2"] },
+    { id:"avengers",icon:"🅰️", tier:"epic",   name:"Qasoskorlar to'liq",
+      desc:"To'rtta Qasoskorlar filmi", films:["av1","av2","av3","av4"] },
+
+    // --- Fazalar ---
+    { id:"phase1", icon:"🌱", tier:"common", name:"Tashabbus",
+      desc:"1-Faza to'liq ko'rildi", phase:1 },
+    { id:"phase2", icon:"🔥", tier:"rare",   name:"Kengayish",
+      desc:"2-Faza to'liq ko'rildi", phase:2 },
+    { id:"phase3", icon:"⚔️", tier:"epic",   name:"Buyuk urush",
+      desc:"3-Faza to'liq ko'rildi", phase:3 },
+    { id:"phase4", icon:"🌀", tier:"rare",   name:"Yangi ovozlar",
+      desc:"4-Faza to'liq ko'rildi", phase:4 },
+    { id:"phase5", icon:"🌟", tier:"rare",   name:"Ko'p qirralik",
+      desc:"5-Faza to'liq ko'rildi", phase:5 },
+
+    // --- Sagalar ---
+    { id:"infinity",   icon:"🧭", tier:"legend", name:"Cheksizlik sagasi",
+      desc:"1-3 fazalarning hammasi", saga:"infinity" },
+    { id:"multiverse", icon:"🆕", tier:"epic",   name:"Multikoinot sagasi",
+      desc:"4-6 fazalarning hammasi", saga:"multiverse" }
+  ];
+
+  // Nishonlar profilda uch bo'limga bo'linadi
+  var BADGE_GROUPS = [
+    { id: "saga",  grid: "grid-saga",  cnt: "cnt-saga" },
+    { id: "phase", grid: "grid-phase", cnt: "cnt-phase" },
+    { id: "hero",  grid: "grid-hero",  cnt: "cnt-hero" }
+  ];
+
+  // Guruh shartning shaklidan kelib chiqadi. Kelajakda shartga tushmaydigan
+  // nishon qo'shilsa, unga `group:"..."` yozib qo'yish kifoya.
+  function badgeGroup(b) {
+    if (b.group) { return b.group; }
+    if (b.saga) { return "saga"; }
+    if (b.phase) { return "phase"; }
+    return "hero";
+  }
+
+  function findBadge(id) {
+    for (var i = 0; i < BADGES.length; i++) {
+      if (BADGES[i].id === id) { return BADGES[i]; }
+    }
+    return null;
+  }
+
+  function sagaPhases(sagaId) {
+    for (var i = 0; i < SAGAS.length; i++) {
+      if (SAGAS[i].id === sagaId) { return SAGAS[i].phases; }
+    }
+    return [];
+  }
+
+  // Nishon qaysi filmlarni talab qiladi
+  function badgeFilms(b) {
+    if (b.films) { return b.films; }
+    if (b.phase) {
+      return inPhase(b.phase).map(function (m) { return m.id; });
+    }
+    if (b.saga) {
+      var ph = sagaPhases(b.saga);
+      return MOVIES.filter(function (m) { return ph.indexOf(m.p) !== -1; })
+                   .map(function (m) { return m.id; });
+    }
+    return [];
+  }
+
+  function badgeState(b) {
+    var ids = badgeFilms(b);
+    var have = 0;
+    for (var i = 0; i < ids.length; i++) { if (seen(ids[i])) { have++; } }
+    return { ids: ids, have: have, total: ids.length,
+             got: ids.length > 0 && have === ids.length };
+  }
+
+  // Nishon uchun kerakli filmlardan biri hali kanalga qo'shilmagan bo'lsa,
+  // uni erishib bo'lmaydi — buni yashirmasdan aytamiz, aks holda odam
+  // "3/4" ni ko'rib, aybni o'zidan qidiradi.
+  function badgeBlocked(b) {
+    var ids = badgeFilms(b);
+    for (var i = 0; i < ids.length; i++) {
+      if (!ready(ids[i])) { return true; }
+    }
+    return false;
+  }
+
+  function earnedIds() {
+    var out = [];
+    BADGES.forEach(function (b) { if (badgeState(b).got) { out.push(b.id); } });
+    return out;
+  }
+
+  /* ---------- Nishon xotirasi ---------- */
+
+  function readSeenBadges() {
+    // null = hech qachon saqlanmagan (birinchi ishga tushish)
+    try {
+      var raw = window.localStorage.getItem(BADGE_KEY);
+      if (raw === null) { return null; }
+      return raw ? raw.split(",") : [];
+    } catch (e) { return null; }
+  }
+
+  function writeSeenBadges(arr) {
+    var val = arr.join(",");
+    try { window.localStorage.setItem(BADGE_KEY, val); } catch (e) {}
+    if (!cloudOk) { return; }
+    try { tg.CloudStorage.setItem(BADGE_KEY, val, function () {}); } catch (e) {}
+  }
+
+  function syncBadges() {
+    var now = earnedIds();
+    var was = readSeenBadges();
+
+    // Birinchi marta ochilganda nishonlab o'tirmaymiz — shunchaki eslab
+    // qolamiz. Aks holda eski foydalanuvchiga 10 ta tabrik birdan chiqadi.
+    if (was === null) { writeSeenBadges(now); return; }
+
+    var fresh = now.filter(function (id) { return was.indexOf(id) === -1; });
+
+    // Belgi olib tashlansa nishon ham yo'qoladi — xotira yangilanishi kerak,
+    // aks holda qayta erishilganda tabrik chiqmaydi
+    if (fresh.length || now.length !== was.length) { writeSeenBadges(now); }
+    if (!fresh.length) { return; }
+
+    showUnlock(fresh[fresh.length - 1]);
+    haptic("impact");
+  }
+
+  function showUnlock(id) {
+    var b = findBadge(id);
+    if (!b) { return; }
+    $("unlock-ico").textContent = b.icon;
+    $("unlock-nm").textContent = b.name;
+    $("unlock-strip").classList.remove("hidden");
+  }
+
+  function hideUnlock() {
+    $("unlock-strip").classList.add("hidden");
+  }
+
+  /* ---------------------------------------------------------------
+     NISHON VARAG'I
+  --------------------------------------------------------------- */
+
+  function movieById(id) {
+    for (var i = 0; i < MOVIES.length; i++) {
+      if (MOVIES[i].id === id) { return MOVIES[i]; }
+    }
+    return null;
+  }
+
+  function openSheet(b) {
+    var st = badgeState(b);
+
+    $("sheet-ico").textContent = b.icon;
+    $("sheet-nm").textContent = b.name;
+    $("sheet-ds").textContent = b.desc;
+
+    var box = $("sheet-list");
+    box.innerHTML = "";
+
+    st.ids.forEach(function (id) {
+      var m = movieById(id);
+      if (!m) { return; }
+      var done = seen(id);
+
+      var row = document.createElement("div");
+      row.className = "film-row " + (done ? "done" : "todo");
+
+      var mark = document.createElement("span");
+      mark.className = "film-mark";
+      mark.textContent = done ? "✓" : "○";
+
+      var nm = document.createElement("span");
+      nm.className = "film-nm";
+      nm.textContent = m[lang] || m.uz;
+
+      row.appendChild(mark);
+      row.appendChild(nm);
+
+      // Ko'rilmagan film bosilsa — to'g'ridan botga. Nishon shu yerda
+      // tavsiyaga aylanadi.
+      if (!done && ready(id)) {
+        var go = document.createElement("span");
+        go.className = "film-go";
+        go.textContent = "Ochish ›";
+        row.appendChild(go);
+        row.addEventListener("click", function () {
+          closeSheet();
+          askPlay(id, m[lang] || m.uz);
+        });
+      } else if (!ready(id)) {
+        var soon = document.createElement("span");
+        soon.className = "film-soon";
+        soon.textContent = "Tez orada";
+        row.appendChild(soon);
+      }
+
+      box.appendChild(row);
+    });
+
+    var left = st.total - st.have;
+    $("sheet-left").textContent = left
+      ? left + " ta film qoldi"
+      : "✓ Nishon qo'lga kiritilgan";
+
+    var note = $("sheet-note");
+    if (!st.got && badgeBlocked(b)) {
+      note.textContent = "⏳ Bu nishon uchun kerakli filmlardan ba'zilari "
+                       + "hali kolleksiyaga qo'shilmagan. Qo'shilgach ochiladi.";
+      note.classList.remove("hidden");
+    } else {
+      note.classList.add("hidden");
+    }
+
+    $("sheet").classList.remove("hidden");
+  }
+
+  function closeSheet() {
+    $("sheet").classList.add("hidden");
+  }
+
+  /* ---------------------------------------------------------------
+     PROFIL
+  --------------------------------------------------------------- */
+
+  function tgUser() {
+    try { return (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || null; }
+    catch (e) { return null; }
+  }
+
+  function fullName(u) {
+    if (!u) { return "Mehmon"; }
+    return ((u.first_name || "") + " " + (u.last_name || "")).trim() || "Mehmon";
+  }
+
+  function initials(name) {
+    var parts = name.split(" ").filter(Boolean);
+    if (!parts.length) { return "?"; }
+    if (parts.length === 1) { return parts[0].charAt(0).toUpperCase(); }
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
+
+  function fillFace(el, u, name) {
+    el.innerHTML = "";
+    if (u && u.photo_url) {
+      var img = document.createElement("img");
+      img.src = u.photo_url;
+      img.onerror = function () { el.textContent = initials(name); };
+      el.appendChild(img);
+      return;
+    }
+    el.textContent = initials(name);
+  }
+
+  function badgeTile(b) {
+    var st = badgeState(b);
+
+    var el = document.createElement("button");
+    el.className = "badge" + (st.got ? " got t-" + b.tier : "");
+
+    var ico = document.createElement("span");
+    ico.className = "badge-ico";
+    ico.textContent = b.icon;
+
+    var nm = document.createElement("span");
+    nm.className = "badge-nm";
+    nm.textContent = b.name;
+
+    var cnt = document.createElement("span");
+    cnt.className = "badge-cnt";
+    cnt.textContent = st.got ? "✓" : st.have + "/" + st.total;
+
+    el.appendChild(ico);
+    el.appendChild(nm);
+    el.appendChild(cnt);
+
+    if (!st.got && badgeBlocked(b)) {
+      var soon = document.createElement("span");
+      soon.className = "badge-soon";
+      soon.textContent = "⏳";
+      soon.title = "Kerakli filmlar hali qo'shilmagan";
+      el.appendChild(soon);
+    }
+
+    el.addEventListener("click", function () { openSheet(b); });
+
+    return el;
+  }
+
+  function renderProfile() {
+    var u = tgUser();
+    var name = fullName(u);
+    fillFace($("prof-face"), u, name);
+    $("prof-name").textContent = name;
+
+    var got = earnedIds();
+    $("prof-sub").textContent = got.length + " / " + BADGES.length + " nishon";
+
+    BADGE_GROUPS.forEach(function (g) {
+      var items = BADGES.filter(function (b) { return badgeGroup(b) === g.id; });
+
+      var grid = $(g.grid);
+      grid.innerHTML = "";
+
+      var done = 0;
+      items.forEach(function (b) {
+        if (badgeState(b).got) { done++; }
+        grid.appendChild(badgeTile(b));
+      });
+
+      var cnt = $(g.cnt);
+      cnt.textContent = done + " / " + items.length;
+      cnt.className = "panel-cnt" + (items.length && done === items.length ? " full" : "");
+    });
+  }
+
+  function openProfile() {
+    hideUnlock();
+    renderProfile();
+    $("scr-cat").classList.add("hidden");
+    $("scr-prof").classList.remove("hidden");
+    window.scrollTo(0, 0);
+  }
+
+  function closeProfile() {
+    closeSheet();
+    $("scr-prof").classList.add("hidden");
+    $("scr-cat").classList.remove("hidden");
+    renderCatalog();
+    window.scrollTo(0, 0);
+  }
+
+  function resetAll() {
+    var msg = "Barcha belgilar va nishonlar o'chiriladi. Davom etamizmi?";
+    function go(ok) {
+      if (!ok) { return; }
+      watched = {};
+      writeSeenBadges([]);
+      persist();
+      renderProfile();
+      haptic("impact");
+    }
+    if (tg && tg.showConfirm) { tg.showConfirm(msg, go); }
+    else { go(window.confirm ? window.confirm(msg) : false); }
+  }
+
+  /* ---------------------------------------------------------------
+     TIL
+  --------------------------------------------------------------- */
+
+  function renderLangs() {
+    var box = $("lang-list");
+    box.innerHTML = "";
+    LANGS.forEach(function (l) {
+      var b = document.createElement("button");
+      b.className = "lang-btn";
+
+      var mark = document.createElement("span");
+      mark.className = "lang-mark";
+      mark.style.background = l.grad;
+      mark.textContent = l.flag;
+
+      var name = document.createElement("span");
+      name.textContent = l.name;
+
+      b.appendChild(mark);
+      b.appendChild(name);
+      b.addEventListener("click", function () { openCatalog(l.code); });
+      box.appendChild(b);
+    });
+  }
+
+  function openCatalog(code) {
+    saveLang(code);
+    $("scr-lang").classList.add("hidden");
+    $("scr-prof").classList.add("hidden");
+    $("scr-cat").classList.remove("hidden");
+    renderCatalog();
+  }
+
+  /* ---------------------------------------------------------------
+     ISHGA TUSHIRISH
+  --------------------------------------------------------------- */
+
+  function init() {
+    renderLangs();
+
+    $("avatar-btn").addEventListener("click", openProfile);
+    $("prof-back").addEventListener("click", closeProfile);
+    $("reset-btn").addEventListener("click", resetAll);
+    $("unlock-strip").addEventListener("click", openProfile);
+    $("sheet-close").addEventListener("click", closeSheet);
+    $("sheet-bg").addEventListener("click", closeSheet);
+
+    var chips = document.querySelectorAll(".chip");
+    Array.prototype.forEach.call(chips, function (c) {
+      c.addEventListener("click", function () {
+        Array.prototype.forEach.call(chips, function (x) { x.classList.remove("on"); });
+        c.classList.add("on");
+        filter = c.getAttribute("data-f");
+        haptic("select");
+        renderCatalog();
+      });
+    });
+
+    var u = tgUser();
+    fillFace($("avatar-btn"), u, fullName(u));
+
+    // Lokal ma'lumot sinxron o'qiladi — kutish shart emas
+    absorb(readLocal());
+
+    var settled = false;
+    function show(saved) {
+      if (settled) { return; }
+      settled = true;
+      // Bitta til bo'lsa tanlash ekrani ortiqcha — to'g'ridan katalogga
+      if (saved) { openCatalog(saved); }
+      else if (LANGS.length === 1) { openCatalog(LANGS[0].code); }
+      else { $("scr-lang").classList.remove("hidden"); }
+    }
+
+    var quick = readLocalLang();
+    if (quick) { show(quick); }
+
+    load(function (saved) {
+      show(saved);
+      if (!$("scr-cat").classList.contains("hidden")) { renderCatalog(); }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
