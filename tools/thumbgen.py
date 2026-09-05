@@ -36,6 +36,8 @@ CHANNEL = "MARVEL_KOLLEKSIYA"
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT_DIR = os.path.join(HERE, "fonts")
 
+LOGO = os.path.join(os.path.dirname(HERE), "img", "logo.png")
+
 FONT_FACES = [
     ("Bebas Neue", 400, "BebasNeue-latin.woff2"),
     ("Bebas Neue", 400, "BebasNeue-latin-ext.woff2"),
@@ -104,12 +106,9 @@ html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
     <div style="width:100%%;height:5px;background:#f4f4f2;margin-top:30px"></div>
   </div>
 
-  <!-- Kanal tasmasi -->
-  <div style="position:absolute;left:544px;top:566px;right:72px;display:flex;align-items:center;gap:14px">
-    <div style="display:flex;align-items:baseline;font-family:'IBM Plex Mono',monospace;font-weight:600;line-height:1">
-      <div style="font-size:36px;color:rgba(244,244,242,0.65)">@</div>
-      <div style="font-size:36px;color:#f4f4f2;letter-spacing:4px;text-transform:uppercase">%(channel)s</div>
-    </div>
+  <!-- Kanal tasmasi: logotip (bo'lmasa matn) -->
+  <div style="position:absolute;left:544px;top:566px;right:72px;display:flex;align-items:center;gap:16px">
+    %(brand)s
     <div style="flex:1;height:3px;background:rgba(244,244,242,0.5)"></div>
   </div>
 </div>
@@ -136,6 +135,18 @@ html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
 """
 
 
+def brand_block(channel):
+    """Kanal belgisi: logotip bo'lsa rasm, bo'lmasa eski matnli variant."""
+    if os.path.exists(LOGO):
+        return ('<img src="%s" style="height:46px;width:auto;display:block" '
+                'alt="%s">' % (data_uri(LOGO, "image/png"), esc(channel)))
+    return ('<div style="display:flex;align-items:baseline;'
+            'font-family:\'IBM Plex Mono\',monospace;font-weight:600;line-height:1">'
+            '<div style="font-size:36px;color:rgba(244,244,242,0.65)">@</div>'
+            '<div style="font-size:36px;color:#f4f4f2;letter-spacing:4px;'
+            'text-transform:uppercase">%s</div></div>' % esc(channel))
+
+
 def build_html(poster_path, title, year, channel=CHANNEL):
     return PAGE % {
         "W": W, "H": H,
@@ -143,7 +154,7 @@ def build_html(poster_path, title, year, channel=CHANNEL):
         "poster": data_uri(poster_path, "image/jpeg"),
         "title": esc(title),
         "year": esc(str(year)),
-        "channel": esc(channel),
+        "brand": brand_block(channel),
     }
 
 
