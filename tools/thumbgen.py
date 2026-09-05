@@ -32,6 +32,7 @@ CHROME_PATHS = [
 
 W, H = 1280, 720
 CHANNEL = "MARVEL_KOLLEKSIYA"
+LOGO_H = 72          # logotip balandligi (px)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT_DIR = os.path.join(HERE, "fonts")
@@ -106,10 +107,10 @@ html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
     <div style="width:100%%;height:5px;background:#f4f4f2;margin-top:30px"></div>
   </div>
 
-  <!-- Kanal tasmasi: logotip (bo'lmasa matn) -->
-  <div style="position:absolute;left:544px;top:566px;right:72px;display:flex;align-items:center;gap:16px">
+  <!-- Kanal belgisi. Markazi 584px da qat'iy turadi: logotip
+       kattalashganda ham u pastga siljimaydi. -->
+  <div style="position:absolute;left:544px;top:584px;right:72px;transform:translateY(-50%%);display:flex;align-items:center">
     %(brand)s
-    <div style="flex:1;height:3px;background:rgba(244,244,242,0.5)"></div>
   </div>
 </div>
 
@@ -135,11 +136,12 @@ html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
 """
 
 
-def brand_block(channel):
+def brand_block(channel, logo_h=None):
     """Kanal belgisi: logotip bo'lsa rasm, bo'lmasa eski matnli variant."""
     if os.path.exists(LOGO):
-        return ('<img src="%s" style="height:46px;width:auto;display:block" '
-                'alt="%s">' % (data_uri(LOGO, "image/png"), esc(channel)))
+        return ('<img src="%s" style="height:%dpx;width:auto;display:block" '
+                'alt="%s">' % (data_uri(LOGO, "image/png"),
+                               logo_h or LOGO_H, esc(channel)))
     return ('<div style="display:flex;align-items:baseline;'
             'font-family:\'IBM Plex Mono\',monospace;font-weight:600;line-height:1">'
             '<div style="font-size:36px;color:rgba(244,244,242,0.65)">@</div>'
@@ -147,14 +149,14 @@ def brand_block(channel):
             'text-transform:uppercase">%s</div></div>' % esc(channel))
 
 
-def build_html(poster_path, title, year, channel=CHANNEL):
+def build_html(poster_path, title, year, channel=CHANNEL, logo_h=None):
     return PAGE % {
         "W": W, "H": H,
         "fonts": font_css(),
         "poster": data_uri(poster_path, "image/jpeg"),
         "title": esc(title),
         "year": esc(str(year)),
-        "brand": brand_block(channel),
+        "brand": brand_block(channel, logo_h),
     }
 
 
@@ -184,7 +186,7 @@ def to_jpeg(png_path, out_path, quality=88):
 
 
 def build(poster_path, out_path, title, year, chrome=None, keep_html=False,
-          channel=CHANNEL):
+          channel=CHANNEL, logo_h=None):
     chrome = chrome or find_chrome()
     if not chrome:
         raise SystemExit("Chrome topilmadi. Uni o'rnating yoki CHROME_PATHS ga yo'l qo'shing.")
@@ -193,7 +195,7 @@ def build(poster_path, out_path, title, year, chrome=None, keep_html=False,
     html_path = os.path.join(tmp, "page.html")
     png_path = os.path.join(tmp, "shot.png")
     with open(html_path, "w", encoding="utf-8") as f:
-        f.write(build_html(poster_path, title, year, channel))
+        f.write(build_html(poster_path, title, year, channel, logo_h))
 
     shoot(chrome, html_path, png_path)
     to_jpeg(png_path, out_path)
