@@ -166,15 +166,16 @@ body{
 }
 .card.seen .art{filter:saturate(.55) brightness(.72)}
 
+/* Faqat ko'rilgan filmda chiqadi — bosilmaydi, shuning uchun
+   tugmaga o'xshamasligi kerak */
 .tick{
   position:absolute;top:8px;right:8px;z-index:2;
   width:26px;height:26px;border-radius:50%;
-  background:rgba(10,12,17,.72);backdrop-filter:blur(6px);
-  border:1px solid rgba(255,255,255,.14);
+  background:var(--ok);border:1px solid var(--ok);
   display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:var(--dim);
+  font-size:13px;font-weight:800;color:#0a0c11;
+  pointer-events:none;
 }
-.card.seen .tick{background:var(--ok);border-color:var(--ok);color:#0a0c11;font-weight:800}
 
 .meta{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:9px 10px}
 .meta-title{
@@ -220,12 +221,6 @@ body{
   background:var(--card);border:1px solid var(--line);color:var(--text);
   border-radius:11px;padding:8px 13px;font-family:inherit;
   font-size:13px;font-weight:700;cursor:pointer;
-}
-.danger{
-  width:100%;margin-top:14px;background:transparent;
-  border:1px solid var(--line);color:var(--dim);
-  border-radius:12px;padding:11px;font-family:inherit;
-  font-size:12.5px;font-weight:700;cursor:pointer;
 }
 
 /* ---------- Nishonlar ---------- */
@@ -430,7 +425,6 @@ body{
       <div class="badge-grid" id="grid-hero"></div>
     </div>
 
-    <button class="danger" id="reset-btn">Belgilarni tozalash</button>
   </div>
 
 </div>
@@ -663,14 +657,6 @@ body{
     } catch (e) {}
   }
 
-  function toggle(id) {
-    var k = key(id);
-    if (watched[k]) { delete watched[k]; } else { watched[k] = true; }
-    haptic("select");
-    persist();
-    renderCatalog();
-  }
-
   // Kartaga bosilganda tasdiq so'raladi — tasodifiy teginishdan himoya
   function askPlay(id, title) {
     var msg = '"' + title + '" filmini ochamizmi?';
@@ -752,15 +738,15 @@ body{
       art.appendChild(soon);
     }
 
-    var tick = document.createElement("button");
-    tick.className = "tick";
-    tick.textContent = seen(m.id) ? "✓" : "○";
-    tick.setAttribute("aria-label", "Ko'rilgan deb belgilash");
-    tick.addEventListener("click", function (e) {
-      e.stopPropagation();
-      toggle(m.id);
-    });
-    art.appendChild(tick);
+    // Galochka faqat film ochilgandan keyin paydo bo'ladi va qaytarilmaydi.
+    // Shuning uchun u tugma emas — bosiladigan narsaga o'xshamasligi kerak.
+    if (seen(m.id)) {
+      var tick = document.createElement("span");
+      tick.className = "tick";
+      tick.textContent = "✓";
+      tick.setAttribute("aria-label", "Ko'rilgan");
+      art.appendChild(tick);
+    }
 
     var meta = document.createElement("div");
     meta.className = "meta";
@@ -1253,20 +1239,6 @@ body{
     window.scrollTo(0, 0);
   }
 
-  function resetAll() {
-    var msg = "Barcha belgilar va nishonlar o'chiriladi. Davom etamizmi?";
-    function go(ok) {
-      if (!ok) { return; }
-      watched = {};
-      writeSeenBadges([]);
-      persist();
-      renderProfile();
-      haptic("impact");
-    }
-    if (tg && tg.showConfirm) { tg.showConfirm(msg, go); }
-    else { go(window.confirm ? window.confirm(msg) : false); }
-  }
-
   /* ---------------------------------------------------------------
      TIL
   --------------------------------------------------------------- */
@@ -1310,7 +1282,6 @@ body{
 
     $("avatar-btn").addEventListener("click", openProfile);
     $("prof-back").addEventListener("click", closeProfile);
-    $("reset-btn").addEventListener("click", resetAll);
     $("unlock-strip").addEventListener("click", openProfile);
     $("sheet-close").addEventListener("click", closeSheet);
     $("sheet-bg").addEventListener("click", closeSheet);
