@@ -1756,10 +1756,20 @@ function lockedNote() {
   }
 
   function shareRefLink() {
+    try { tg.HapticFeedback.impactOccurred("light"); } catch (e) {}
+
+    // Asosiy yo'l: bot reklama kartasini yuboradi. switchInlineQuery
+    // faqat mini-ilova tugmadan ochilgan bo'lsa ishlaydi, shuning uchun
+    // ishlamasa oddiy havola ulashishga tushamiz.
+    try {
+      if (tg && tg.switchInlineQuery) {
+        tg.switchInlineQuery("taklif", ["users", "groups", "channels"]);
+        return;
+      }
+    } catch (e) {}
+
     var url = rateData && rateData.share;
     if (!url) { showToast("Havola hali tayyor emas"); return; }
-    try { tg.HapticFeedback.impactOccurred("light"); } catch (e) {}
-    // Telegram ulashish oynasi: chat tanlanadi va havola yuboriladi
     try {
       tg.openTelegramLink(url);
     } catch (e) {
