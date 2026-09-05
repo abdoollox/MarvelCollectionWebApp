@@ -223,6 +223,23 @@ body{
   font-size:13px;font-weight:700;cursor:pointer;
 }
 
+/* ---------- Xabar oynasi ---------- */
+
+.toast{
+  position:fixed;left:50%;bottom:26px;
+  transform:translateX(-50%) translateY(18px);
+  background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:12px 18px;
+  font-size:13.5px;font-weight:600;line-height:1.35;color:var(--text);
+  box-shadow:0 10px 30px rgba(0,0,0,.55);
+  z-index:80;opacity:0;pointer-events:none;
+  max-width:86%;text-align:center;
+  transition:opacity .22s ease,transform .22s ease;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--ok)}
+.toast.err{border-color:var(--accent)}
+
 /* ---------- Nishonlar ---------- */
 
 .badge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -429,6 +446,8 @@ body{
 
 </div>
 
+<div class="toast" id="toast"></div>
+
 <div class="sheet-wrap hidden" id="sheet">
   <div class="sheet-bg" id="sheet-bg"></div>
   <div class="sheet">
@@ -449,7 +468,11 @@ body{
   var tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
   if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
 
-  var BOT = "marvel_kolleksiya_bot";          // @ siz — .env dagi BOT_USERNAME bilan bir xil
+  var BOT = "marvel_kolleksiya_bot";   // @ siz — .env dagi BOT_USERNAME bilan bir xil
+
+  // Filmni so'rash uchun bot API si. U bo'lmasa yoki xato bersa, ilova
+  // eski usulga — botga havola ochishga — o'zi qaytadi.
+  var API_SEND = "https://bot.tizimshunos.uz/marvel/api/send";
   var KEY = "marvel_watched";
   var LANG_KEY = "marvel_lang";
   var BADGE_KEY = "marvel_badges_seen";   // qaysi nishonlar allaqachon nishonlangan
@@ -669,14 +692,86 @@ body{
     if (ok) { play(id); }
   }
 
-  function play(id) {
+  /* ---------- Xabar oynasi ---------- */
+
+  var toastTimer = null;
+
+  function showToast(text, kind) {
+    var el = $("toast");
+    if (!el) { return; }
+    el.textContent = text;
+    el.className = "toast on" + (kind ? " " + kind : "");
+    if (toastTimer) { clearTimeout(toastTimer); }
+    toastTimer = setTimeout(function () { el.className = "toast"; }, 3400);
+  }
+
+  /* ---------- Film so'rash ---------- */
+
+  // Zaxira yo'l: botga havola ochamiz. Bunda Telegram mini-ilovani yopadi.
+  function openInBot(id) {
     var link = "https://t.me/" + BOT + "?start=" + id + "_" + lang;
-    watched[key(id)] = true;
-    renderCatalog();
-    // Belgi saqlangach botga o'tamiz — yozib ulgurmasdan yopilmasin
+    markSeen(id);
     persist(function () {
       if (tg && tg.openTelegramLink) { tg.openTelegramLink(link); tg.close(); }
       else { window.open(link, "_blank"); }
+    });
+  }
+
+  function markSeen(id) {
+    watched[key(id)] = true;
+    renderCatalog();
+  }
+
+  var sending = false;
+
+  function play(id) {
+    if (sending) { return; }
+
+    var initData = "";
+    try { initData = (tg && tg.initData) || ""; } catch (e) {}
+
+    // Telegram tashqarisida yoki fetch yo'q bo'lsa — eski usul
+    if (!initData || !window.fetch) { openInBot(id); return; }
+
+    sending = true;
+    showToast("⏳ Yuborilmoqda…");
+
+    window.fetch(API_SEND, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": initData
+      },
+      body: JSON.stringify({ movie_id: id, lang: lang })
+    }).then(function (r) {
+      return r.json();
+    }).then(function (res) {
+      sending = false;
+
+      if (res && res.ok) {
+        // Galochka endi HAQIQIY: film chindan yuborilgandan keyin qo'yiladi
+        markSeen(id);
+        persist();
+        haptic("impact");
+        showToast("✅ " + (res.title || "Film") + " — botga yuborildi", "ok");
+        return;
+      }
+
+      var err = res && res.error;
+      if (err === "not_ready") {
+        showToast("⏳ Bu film tez orada qo'shiladi", "err");
+        return;
+      }
+      if (err === "not_subscribed") {
+        showToast("🔒 Avval kanalga obuna bo'ling", "err");
+        openInBot(id);
+        return;
+      }
+      // Qolgan xatolarda jim eski usulga o'tamiz
+      openInBot(id);
+    })["catch"](function () {
+      sending = false;
+      openInBot(id);
     });
   }
 
