@@ -332,11 +332,19 @@ body{
   gap:4px;padding:6px 4px;cursor:pointer;
   font-family:inherit;color:var(--dim);
   transition:transform .16s;
+  /* min-width:0 SHART: aks holda uzun nom ustunni kengaytirib
+     yuboradi va uch ustunli to'r kadrdan chiqib ketadi. */
+  min-width:0;
 }
 .badge:active{transform:scale(.94)}
 .badge-ico{font-size:25px;line-height:1;filter:grayscale(1);opacity:.4}
+.badge-img{
+  width:52px;height:52px;object-fit:contain;display:block;
+  filter:grayscale(1) brightness(.75);opacity:.42;
+}
 .badge-nm{
   font-size:10px;font-weight:700;text-align:center;line-height:1.2;
+  overflow-wrap:anywhere;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
 .badge-cnt{font-size:9px;font-weight:700;opacity:.75}
@@ -345,6 +353,7 @@ body{
 
 .badge.got{color:var(--text)}
 .badge.got .badge-ico{filter:none;opacity:1}
+.badge.got .badge-img{filter:none;opacity:1}
 .badge.got.t-common{border-color:#5b6b8c;background:rgba(91,107,140,.14)}
 .badge.got.t-rare{border-color:var(--accent);background:var(--accent-soft)}
 .badge.got.t-epic{border-color:#9b59b6;background:rgba(155,89,182,.16)}
@@ -381,6 +390,7 @@ body{
   display:flex;align-items:center;justify-content:center;font-size:30px;
   background:var(--card);border:1px solid var(--line);
 }
+.sheet-img{width:56px;height:56px;object-fit:contain;display:block}
 .sheet-nm{text-align:center;font-size:18px;font-weight:800;margin-top:12px;letter-spacing:-.3px}
 .sheet-ds{text-align:center;font-size:13px;color:var(--dim);margin-top:4px}
 .sheet-list{margin-top:18px}
@@ -1460,7 +1470,17 @@ function lockedNote() {
   function openSheet(b) {
     var st = badgeState(b);
 
-    $("sheet-ico").textContent = b.icon;
+    // Tafsilot oynasida ham rasm; rasm bo'lmasa emoji
+    var sIco = $("sheet-ico");
+    sIco.innerHTML = "";
+    var sImg = document.createElement("img");
+    sImg.className = "sheet-img";
+    sImg.src = "img/badges/" + b.id + ".png";
+    sImg.alt = "";
+    sImg.addEventListener("error", function () {
+      sIco.textContent = b.icon;
+    });
+    sIco.appendChild(sImg);
     $("sheet-nm").textContent = b.name;
     $("sheet-ds").textContent = b.desc;
 
@@ -1567,9 +1587,20 @@ function lockedNote() {
     var el = document.createElement("button");
     el.className = "badge" + (st.got ? " got t-" + b.tier : "");
 
-    var ico = document.createElement("span");
-    ico.className = "badge-ico";
-    ico.textContent = b.icon;
+    // Nishon rasmi bo'lsa — rasm, bo'lmasa emoji. Rasm yuklanmasa
+    // emojiga qaytamiz, shuning uchun to'plamni bosqichma-bosqich
+    // to'ldirsa ham ilova buzilmaydi.
+    var ico = document.createElement("img");
+    ico.className = "badge-img";
+    ico.src = "img/badges/" + b.id + ".png";
+    ico.alt = "";
+    ico.loading = "lazy";
+    ico.addEventListener("error", function () {
+      var fallback = document.createElement("span");
+      fallback.className = "badge-ico";
+      fallback.textContent = b.icon;
+      if (ico.parentNode) { ico.parentNode.replaceChild(fallback, ico); }
+    });
 
     var nm = document.createElement("span");
     nm.className = "badge-nm";

@@ -1,1 +1,5 @@
 .DS_Store
+
+# Nishonlarning xom generatsiyalari (2048px, ~83 MB) — saytga kerak emas.
+# tools/badgegen.py shulardan img/badges/<id>.png yasaydi.
+img/badges/_raw_*.png
