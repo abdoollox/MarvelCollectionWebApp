@@ -257,6 +257,41 @@ body{
 
 /* ---------- Nishonlar ---------- */
 
+.rate-me{
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg2);border:1px solid var(--line);
+  border-radius:14px;padding:12px 14px;margin-bottom:12px;
+}
+.rate-place{
+  font-size:22px;font-weight:800;line-height:1;min-width:44px;
+}
+.rate-place small{font-size:11px;font-weight:600;color:var(--dim)}
+.rate-me-txt{font-size:12.5px;color:var(--dim);line-height:1.45}
+.rate-me-txt b{color:var(--text);font-size:13.5px}
+
+.rate-row{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 4px;border-top:1px solid var(--line);font-size:14px;
+}
+.rate-row:first-child{border-top:0}
+.rate-row.me{color:var(--text);font-weight:700}
+.rate-pos{min-width:26px;text-align:center;font-size:14px;color:var(--dim)}
+.rate-row.me .rate-pos{color:var(--text)}
+.rate-nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rate-sc{color:var(--dim);font-size:13px}
+.rate-row.me .rate-sc{color:var(--accent)}
+
+.rate-msg{font-size:13px;color:var(--dim);line-height:1.5;padding:4px 2px}
+
+.rate-btns{display:flex;gap:8px;margin-top:12px}
+.rate-btn{
+  flex:1;border:0;border-radius:12px;padding:11px 8px;
+  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+  background:var(--bg2);border:1px solid var(--line);color:var(--text);
+}
+.rate-btn.main{background:var(--accent);border-color:var(--accent);color:#fff}
+.rate-btn:active{opacity:.75}
+
 .badge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 
 .badge{
@@ -445,6 +480,15 @@ body{
     </div>
 
     <div class="panel">
+      <div class="panel-h"><span>REYTING</span><span class="panel-cnt" id="cnt-rate"></span></div>
+      <div id="rate-body"><div class="rate-msg">Yuklanmoqda…</div></div>
+      <div class="rate-btns">
+        <button class="rate-btn" id="rate-copy">🔗 Havolani nusxalash</button>
+        <button class="rate-btn main" id="rate-share">👥 Taklif qilish</button>
+      </div>
+    </div>
+
+    <div class="panel">
       <div class="panel-h"><span>SAGALAR</span><span class="panel-cnt" id="cnt-saga"></span></div>
       <div class="badge-grid" id="grid-saga"></div>
     </div>
@@ -490,6 +534,7 @@ body{
   // Filmni so'rash uchun bot API si. U bo'lmasa yoki xato bersa, ilova
   // eski usulga — botga havola ochishga — o'zi qaytadi.
   var API_SEND = "https://bot.tizimshunos.uz/marvel/api/send";
+  var API_RATING = "https://bot.tizimshunos.uz/marvel/api/rating";
   var KEY = "marvel_watched";
   var LANG_KEY = "marvel_lang";
   var BADGE_KEY = "marvel_badges_seen";   // qaysi nishonlar allaqachon nishonlangan
@@ -1363,7 +1408,178 @@ body{
     return el;
   }
 
-  function renderProfile() {
+// ---------- Reyting ----------
+  // Ma'lumot botdan keladi: WebApp o'zi hech kimning ballini bilmaydi.
+  var rateData = null;   // oxirgi javob
+  var rateBusy = false;
+  var MEDALS = ["🥇", "🥈", "🥉"];
+
+  function rateMsg(text) {
+    var el = document.createElement("div");
+    el.className = "rate-msg";
+    el.textContent = text;
+    return el;
+  }
+
+  function renderRating(d) {
+    var body = $("rate-body");
+    body.innerHTML = "";
+
+    var me = d.me || {};
+    var cnt = $("cnt-rate");
+    cnt.textContent = me.place ? me.place + " / " + me.total : "";
+    cnt.className = "panel-cnt" + (me.place === 1 ? " full" : "");
+
+    // O'z holati
+    var card = document.createElement("div");
+    card.className = "rate-me";
+
+    var place = document.createElement("div");
+    place.className = "rate-place";
+    if (me.place) {
+      place.appendChild(document.createTextNode(String(me.place)));
+      var suffix = document.createElement("small");
+      suffix.textContent = "-o'rin";
+      place.appendChild(suffix);
+    } else {
+      place.textContent = "—";
+    }
+
+    // Matn DOM orqali quriladi: ism ham, daraja ham tashqaridan keladi,
+    // shuning uchun innerHTML ishlatilmaydi.
+    var txt = document.createElement("div");
+    txt.className = "rate-me-txt";
+    var head = document.createElement("b");
+    var tail = document.createTextNode("");
+    if (me.place) {
+      head.textContent = me.score + " ta do'st";
+      tail.nodeValue = me.rank || "";
+    } else {
+      head.textContent = "Hali ballingiz yo'q";
+      tail.nodeValue = "Havolangizni ulashing va ro'yxatga chiqing";
+    }
+    txt.appendChild(head);
+    txt.appendChild(document.createElement("br"));
+    txt.appendChild(tail);
+
+    card.appendChild(place);
+    card.appendChild(txt);
+    body.appendChild(card);
+
+    // TOP ro'yxat
+    if (!d.top || !d.top.length) {
+      body.appendChild(rateMsg("Hali hech kim do'st taklif qilmagan. Birinchi bo'ling!"));
+      return;
+    }
+
+    d.top.forEach(function (r, i) {
+      var row = document.createElement("div");
+      row.className = "rate-row" + (r.me ? " me" : "");
+
+      var pos = document.createElement("span");
+      pos.className = "rate-pos";
+      pos.textContent = i < MEDALS.length ? MEDALS[i] : (i + 1) + ".";
+
+      var nm = document.createElement("span");
+      nm.className = "rate-nm";
+      nm.textContent = r.name;
+
+      var sc = document.createElement("span");
+      sc.className = "rate-sc";
+      sc.textContent = r.score + " ta";
+
+      row.appendChild(pos);
+      row.appendChild(nm);
+      row.appendChild(sc);
+      body.appendChild(row);
+    });
+  }
+
+  function loadRating() {
+    if (rateBusy) { return; }
+
+    // Avval ma'lum bo'lgan holatni ko'rsatamiz — panel bo'sh turmasin
+    if (rateData) { renderRating(rateData); }
+
+    var initData = "";
+    try { initData = (tg && tg.initData) || ""; } catch (e) {}
+
+    if (!initData || !window.fetch) {
+      if (!rateData) {
+        $("rate-body").innerHTML = "";
+        $("rate-body").appendChild(rateMsg(
+          "Reytingni ko'rish uchun kolleksiyani Telegram orqali oching."));
+      }
+      return;
+    }
+
+    rateBusy = true;
+    window.fetch(API_RATING, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": initData
+      },
+      body: "{}"
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      rateBusy = false;
+      if (!d || !d.ok) { throw new Error(d && d.error); }
+      rateData = d;
+      renderRating(d);
+    }).catch(function () {
+      rateBusy = false;
+      if (rateData) { return; }   // eski ma'lumot qolsin
+      $("rate-body").innerHTML = "";
+      $("rate-body").appendChild(rateMsg("Reytingni yuklab bo'lmadi. Keyinroq urinib ko'ring."));
+    });
+  }
+
+  function copyRefLink() {
+    var link = rateData && rateData.link;
+    if (!link) { showToast("Havola hali tayyor emas"); return; }
+
+    function done() {
+      showToast("Havola nusxalandi ✅");
+      try { tg.HapticFeedback.notificationOccurred("success"); } catch (e) {}
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(done, fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    function fallbackCopy() {
+      // Eski brauzerlar uchun: vaqtincha maydon yaratib nusxalaymiz
+      try {
+        var t = document.createElement("textarea");
+        t.value = link;
+        t.style.position = "fixed";
+        t.style.opacity = "0";
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand("copy");
+        document.body.removeChild(t);
+        done();
+      } catch (e) {
+        showToast("Nusxalab bo'lmadi");
+      }
+    }
+  }
+
+  function shareRefLink() {
+    var url = rateData && rateData.share;
+    if (!url) { showToast("Havola hali tayyor emas"); return; }
+    try { tg.HapticFeedback.impactOccurred("light"); } catch (e) {}
+    // Telegram ulashish oynasi: chat tanlanadi va havola yuboriladi
+    try {
+      tg.openTelegramLink(url);
+    } catch (e) {
+      window.open(url, "_blank");
+    }
+  }
+
+    function renderProfile() {
     var u = tgUser();
     var name = fullName(u);
     fillFace($("prof-face"), u, name);
@@ -1371,6 +1587,8 @@ body{
 
     var got = earnedIds();
     $("prof-sub").textContent = got.length + " / " + BADGES.length + " nishon";
+
+    loadRating();
 
     BADGE_GROUPS.forEach(function (g) {
       var items = BADGES.filter(function (b) { return badgeGroup(b) === g.id; });
@@ -1448,6 +1666,8 @@ body{
     renderLangs();
 
     $("avatar-btn").addEventListener("click", openProfile);
+    $("rate-copy").addEventListener("click", copyRefLink);
+    $("rate-share").addEventListener("click", shareRefLink);
     $("prof-back").addEventListener("click", closeProfile);
     $("unlock-strip").addEventListener("click", openProfile);
     $("sheet-close").addEventListener("click", closeSheet);
