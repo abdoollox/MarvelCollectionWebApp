@@ -176,6 +176,25 @@ body{
 }
 .meta-sub{font-size:10.5px;color:var(--dim);margin-top:2px;font-weight:600}
 
+/* Ovoz chizig'i sarlavha ostida, meta ichida oqadi — ustma-ust tushmasin */
+.vote{margin-top:7px}
+.vote-bar{
+  height:4px;border-radius:3px;background:rgba(255,255,255,.16);
+  overflow:hidden;margin-bottom:5px;
+}
+.vote-bar span{
+  display:block;height:100%;background:var(--accent);
+  border-radius:3px;transition:width .3s;
+}
+.vote-txt{
+  font-size:10px;font-weight:700;color:#dfe4ec;letter-spacing:.2px;
+  display:flex;align-items:center;gap:4px;
+}
+.vote-txt.done{color:var(--ok)}
+.card.locked{cursor:pointer}
+.card.locked .art{filter:saturate(.55) brightness(.72)}
+.card.voted .art{filter:saturate(.8) brightness(.85)}
+
 .soon{
   position:absolute;top:8px;left:8px;z-index:2;
   background:rgba(10,12,17,.78);border:1px solid var(--line);
@@ -535,6 +554,8 @@ body{
   // eski usulga — botga havola ochishga — o'zi qaytadi.
   var API_SEND = "https://bot.tizimshunos.uz/marvel/api/send";
   var API_RATING = "https://bot.tizimshunos.uz/marvel/api/rating";
+  var API_VOTES  = "https://bot.tizimshunos.uz/marvel/api/votes";
+  var API_VOTE   = "https://bot.tizimshunos.uz/marvel/api/vote";
   var KEY = "marvel_watched";
   var LANG_KEY = "marvel_lang";
   var BADGE_KEY = "marvel_badges_seen";   // qaysi nishonlar allaqachon nishonlangan
@@ -922,6 +943,125 @@ body{
     img.src = poster(m.id);
   }
 
+// ---------- Ovoz berish ----------
+  // Joylanmagan filmlar yopiq turadi. Foydalanuvchi ovoz beradi;
+  // film maqsadga yetsa, admin uni joylaydi.
+  var votes = { goal: 100, counts: {}, mine: [] };
+  var votesReady = false;
+  var voting = {};   // bir vaqtda bitta filmga bitta so'rov
+
+  function initData() {
+    try { return (tg && tg.initData) || ""; } catch (e) { return ""; }
+  }
+
+  function voteCount(id) { return votes.counts[id] || 0; }
+  function votedFor(id) { return votes.mine.indexOf(id) !== -1; }
+
+  function loadVotes(done) {
+    var init = initData();
+    if (!init || !window.fetch) { if (done) { done(); } return; }
+
+    window.fetch(API_VOTES, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": init
+      },
+      body: "{}"
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok) {
+        votes = { goal: d.goal || 100, counts: d.counts || {}, mine: d.mine || [] };
+        votesReady = true;
+      }
+      if (done) { done(); }
+    })["catch"](function () { if (done) { done(); } });
+  }
+
+  function voteStrip(id) {
+    var box = document.createElement("div");
+    box.className = "vote";
+
+    var count = voteCount(id);
+    var pct = Math.min(100, Math.round(count * 100 / votes.goal));
+
+    var bar = document.createElement("div");
+    bar.className = "vote-bar";
+    var fill = document.createElement("span");
+    fill.style.width = pct + "%";
+    bar.appendChild(fill);
+
+    var txt = document.createElement("div");
+    txt.className = "vote-txt" + (votedFor(id) ? " done" : "");
+    if (!votesReady) {
+      txt.textContent = "Ovoz berish";
+    } else if (votedFor(id)) {
+      txt.textContent = "✓ " + count + " / " + votes.goal;
+    } else {
+      txt.textContent = "👍 " + count + " / " + votes.goal;
+    }
+
+    box.appendChild(bar);
+    box.appendChild(txt);
+    return box;
+  }
+
+  function castVote(id, title) {
+    if (voting[id]) { return; }
+
+    var init = initData();
+    if (!init || !window.fetch) {
+      if (tg && tg.showAlert) { tg.showAlert("Ovoz berish uchun kolleksiyani Telegram orqali oching."); }
+      return;
+    }
+    if (votedFor(id)) {
+      showToast("Siz bu filmga allaqachon ovoz bergansiz");
+      return;
+    }
+
+    voting[id] = true;
+    window.fetch(API_VOTE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": init
+      },
+      body: JSON.stringify({ movie_id: id })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      voting[id] = false;
+
+      if (d && d.ok) {
+        votes.counts[id] = d.count;
+        if (!votedFor(id)) { votes.mine.push(id); }
+        votesReady = true;
+        haptic("impact");
+        showToast("✅ Ovozingiz qabul qilindi — " + title, "ok");
+        renderCatalog();
+        return;
+      }
+
+      var err = d && d.error;
+      if (err === "already") {
+        if (typeof d.count === "number") { votes.counts[id] = d.count; }
+        if (!votedFor(id)) { votes.mine.push(id); }
+        showToast("Siz bu filmga allaqachon ovoz bergansiz");
+        renderCatalog();
+        return;
+      }
+      if (err === "not_subscribed") {
+        showToast("🔒 Avval kanalga obuna bo'ling", "err");
+        return;
+      }
+      if (err === "not_votable") {
+        showToast("Bu film allaqachon qo'shilgan", "err");
+        return;
+      }
+      showToast("Ovoz berib bo'lmadi. Keyinroq urinib ko'ring", "err");
+    })["catch"](function () {
+      voting[id] = false;
+      showToast("Ovoz berib bo'lmadi. Keyinroq urinib ko'ring", "err");
+    });
+  }
+
   function cardEl(m) {
     var card = document.createElement("div");
     card.className = "card" + (seen(m.id) ? " seen" : "");
@@ -939,8 +1079,10 @@ body{
     if (!ready(m.id)) {
       var soon = document.createElement("span");
       soon.className = "soon";
-      soon.textContent = "TEZ ORADA";
+      soon.textContent = "🔒 YOPIQ";
       art.appendChild(soon);
+      card.classList.add("locked");
+      if (votedFor(m.id)) { card.classList.add("voted"); }
     }
 
     // Galochka faqat film ochilgandan keyin paydo bo'ladi va qaytarilmaydi.
@@ -963,13 +1105,15 @@ body{
     s.textContent = m.n + " • " + m.y;
     meta.appendChild(t);
     meta.appendChild(s);
+    if (!ready(m.id)) { meta.appendChild(voteStrip(m.id)); }
 
     card.appendChild(art);
     card.appendChild(meta);
 
     card.addEventListener("click", function () {
       if (!ready(m.id)) {
-        if (tg && tg.showAlert) { tg.showAlert("Bu film tez orada qo'shiladi."); }
+        // Yopiq film: bosish = ovoz berish
+        castVote(m.id, m[lang] || m.uz);
         return;
       }
       askPlay(m.id, m[lang] || m.uz);
@@ -1705,6 +1849,11 @@ body{
 
     load(function (saved) {
       show(saved);
+      if (!$("scr-cat").classList.contains("hidden")) { renderCatalog(); }
+    });
+
+    // Ovoz sonlari botdan keladi — kelgach kartalarni qayta chizamiz
+    loadVotes(function () {
       if (!$("scr-cat").classList.contains("hidden")) { renderCatalog(); }
     });
   }
