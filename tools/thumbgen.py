@@ -1,274 +1,212 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Ulashish kartalari uchun 16:9 thumbnail generatori.
+"""Ulashish kartalari uchun 16:9 rasm generatori.
 
-Manba — bitta vertikal poster (img/<id>.jpg). Natija — img/wide/<id>.jpg.
-Ya'ni har film uchun faqat BITTA rasm yuklash kifoya, qolganini skript qiladi.
+Dizayn Claude Design'da tayyorlangan ("Marvel Video Covers"). U HTML/CSS
+da yozilgani uchun bu skript ham uni HTML sifatida chizadi va Chrome
+bilan suratga oladi — Pillow'da qayta chizsak, aslidan chetlashardi.
+
+Manba — bitta 2:3 poster (img/<id>.jpg). Natija — img/wide/<id>.jpg,
+aniq 1280x720.
 
 Ishlatish:
-    python3 tools/thumbgen.py                  # hammasini yasaydi
-    python3 tools/thumbgen.py im1 av4          # faqat ko'rsatilganlarni
-    python3 tools/thumbgen.py --style diagonal # boshqa uslubda
-    python3 tools/thumbgen.py --force          # mavjudlarini ham qayta yasaydi
+    python3 tools/thumbgen.py                 # posteri bor hamma film
+    python3 tools/thumbgen.py im1 av4         # faqat ko'rsatilganlar
+    python3 tools/thumbgen.py --force         # mavjudlarini qayta yasaydi
+    python3 tools/thumbgen.py --keep-html     # oraliq HTML ni saqlaydi
 """
 
 import os
 import sys
+import base64
 import argparse
+import subprocess
+import tempfile
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+CHROME_PATHS = [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+]
 
 W, H = 1280, 720
+CHANNEL = "MARVEL_KOLLEKSIYA"
 
-RED = (237, 29, 36)
-DARK = (10, 12, 17)
-WHITE = (255, 255, 255)
+HERE = os.path.dirname(os.path.abspath(__file__))
+FONT_DIR = os.path.join(HERE, "fonts")
 
-FONT_HEAVY = "/System/Library/Fonts/Supplemental/Arial Black.ttf"
-FONT_BOLD = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
-
-BRAND = "MARVEL KOLLEKSIYA"
-
-
-# ----------------------------------------------------------------- yordamchi
-
-def load_font(path, size):
-    try:
-        return ImageFont.truetype(path, size)
-    except Exception:
-        return ImageFont.load_default()
+FONT_FACES = [
+    ("Bebas Neue", 400, "BebasNeue-latin.woff2"),
+    ("Bebas Neue", 400, "BebasNeue-latin-ext.woff2"),
+    ("IBM Plex Mono", 600, "IBMPlexMono-600-latin.woff2"),
+    ("IBM Plex Mono", 600, "IBMPlexMono-600-latin-ext.woff2"),
+]
 
 
-def text_size(draw, text, font):
-    box = draw.textbbox((0, 0), text, font=font)
-    return box[2] - box[0], box[3] - box[1]
+def find_chrome():
+    for p in CHROME_PATHS:
+        if os.path.exists(p):
+            return p
+    return None
 
 
-def _wrap(draw, text, font, max_w):
-    """Matnni so'zlar bo'yicha qatorlarga bo'ladi (sig'ish kafolatlanmaydi)."""
-    lines, cur = [], ""
-    for word in text.split():
-        probe = (cur + " " + word).strip()
-        if not cur or text_size(draw, probe, font)[0] <= max_w:
-            cur = probe
-        else:
-            lines.append(cur)
-            cur = word
-    if cur:
-        lines.append(cur)
-    return lines
+def data_uri(path, mime):
+    with open(path, "rb") as f:
+        return "data:%s;base64,%s" % (mime, base64.b64encode(f.read()).decode())
 
 
-def fit_lines(draw, text, path, max_w, max_lines=2, start=64, low=22):
-    """Matn kenglikka HAQIQATAN sig'adigan o'lchamni topadi.
-
-    Avvalgi variant bitta uzun so'z sig'masa ham uni qo'shib yuborardi va
-    matn kadrdan chiqib ketardi. Endi har o'lcham uchun barcha qatorlar
-    tekshiriladi.
-    """
-    for size in range(start, low - 1, -2):
-        font = load_font(path, size)
-        lines = _wrap(draw, text, font, max_w)
-        if len(lines) <= max_lines and all(
-                text_size(draw, ln, font)[0] <= max_w for ln in lines):
-            return lines, font
-    font = load_font(path, low)
-    return _wrap(draw, text, font, max_w)[:max_lines], font
+def font_css():
+    out = []
+    for family, weight, fname in FONT_FACES:
+        path = os.path.join(FONT_DIR, fname)
+        if not os.path.exists(path):
+            continue
+        out.append(
+            "@font-face{font-family:'%s';font-style:normal;font-weight:%d;"
+            "font-display:block;src:url('%s') format('woff2');}"
+            % (family, weight, data_uri(path, "font/woff2")))
+    return "\n".join(out)
 
 
-def fit_one(draw, text, path, max_w, start=22, low=12):
-    """Bitta qatorli matn uchun sig'adigan o'lcham."""
-    for size in range(start, low - 1, -1):
-        font = load_font(path, size)
-        if text_size(draw, text, font)[0] <= max_w:
-            return font
-    return load_font(path, low)
+def esc(text):
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
 
-def backdrop(poster):
-    """Xiralashtirilgan, qoraytirilgan fon — posterning o'zidan."""
-    src = poster.copy().convert("RGB")
-    ratio = max(W / src.width, H / src.height)
-    src = src.resize((int(src.width * ratio * 1.15), int(src.height * ratio * 1.15)),
-                     Image.LANCZOS)
-    left = (src.width - W) // 2
-    top = (src.height - H) // 2
-    src = src.crop((left, top, left + W, top + H))
-    src = src.filter(ImageFilter.GaussianBlur(28))
-    dark = Image.new("RGB", (W, H), DARK)
-    return Image.blend(src, dark, 0.62)
+PAGE = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+%(fonts)s
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
+</style></head><body>
+
+<div id="cover" style="position:relative;width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#24242a;font-family:'Bebas Neue',Impact,sans-serif">
+
+  <!-- Fon: posterning o'zi, xiralashtirilgan va qoraytirilgan -->
+  <div style="position:absolute;inset:-60px;filter:blur(38px) saturate(1) brightness(0.66)">
+    <div style="position:absolute;inset:0;background:#2a2730 center/cover no-repeat;background-image:url('%(poster)s')"></div>
+  </div>
+
+  <!-- Yumshoq yorug'lik: chapdan o'ngga qorayadi -->
+  <div style="position:absolute;inset:0;background:radial-gradient(90%% 120%% at 22%% 50%%, rgba(255,255,255,0.14) 0%%, rgba(12,12,16,0.6) 72%%)"></div>
+
+  <!-- Poster ostidagi siljigan oq blok -->
+  <div style="position:absolute;left:108px;top:114px;width:340px;height:510px;background:#f4f4f2"></div>
+  <div style="position:absolute;left:90px;top:100px;width:340px;height:510px;background:#2a2730 center/cover no-repeat;background-image:url('%(poster)s')"></div>
+
+  <!-- Yil, nom, chiziq -->
+  <div id="l-text" style="position:absolute;left:544px;top:0;bottom:164px;right:72px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:30px;letter-spacing:6px;color:#15151a;background:#f4f4f2;padding:12px 20px 10px;margin-bottom:26px">%(year)s</div>
+    <div id="title" style="font-size:96px;line-height:0.86;letter-spacing:2px;color:#f5f5f3;text-transform:uppercase">%(title)s</div>
+    <div style="width:100%%;height:5px;background:#f4f4f2;margin-top:30px"></div>
+  </div>
+
+  <!-- Kanal tasmasi -->
+  <div style="position:absolute;left:544px;top:566px;right:72px;display:flex;align-items:center;gap:14px">
+    <div style="display:flex;align-items:baseline;font-family:'IBM Plex Mono',monospace;font-weight:600;line-height:1">
+      <div style="font-size:36px;color:rgba(244,244,242,0.65)">@</div>
+      <div style="font-size:36px;color:#f4f4f2;letter-spacing:4px;text-transform:uppercase">%(channel)s</div>
+    </div>
+    <div style="flex:1;height:3px;background:rgba(244,244,242,0.5)"></div>
+  </div>
+</div>
+
+<script>
+// Uzun nomlar kadrdan chiqmasin: sig'guncha kichraytiramiz.
+// Dizaynda nom qo'lda ikki qatorga bo'lingan edi, bizda 38 xil nom bor.
+(function () {
+  var box = document.getElementById('l-text');
+  var title = document.getElementById('title');
+  var size = 96;
+  function overflows() {
+    return title.scrollWidth > title.clientWidth + 1 ||
+           box.scrollHeight > box.clientHeight + 1;
+  }
+  while (size > 40 && overflows()) {
+    size -= 2;
+    title.style.fontSize = size + 'px';
+  }
+  document.documentElement.setAttribute('data-ready', '1');
+})();
+</script>
+</body></html>
+"""
 
 
-def cover(poster, box_w, box_h):
-    """Rasmni berilgan o'lchamga to'ldirib kesadi."""
-    src = poster.copy().convert("RGB")
-    ratio = max(box_w / src.width, box_h / src.height)
-    src = src.resize((max(1, int(src.width * ratio)), max(1, int(src.height * ratio))),
-                     Image.LANCZOS)
-    left = (src.width - box_w) // 2
-    top = int((src.height - box_h) * 0.35)   # yuzlar odatda yuqorida
-    return src.crop((left, top, left + box_w, top + box_h))
+def build_html(poster_path, title, year, channel=CHANNEL):
+    return PAGE % {
+        "W": W, "H": H,
+        "fonts": font_css(),
+        "poster": data_uri(poster_path, "image/jpeg"),
+        "title": esc(title),
+        "year": esc(str(year)),
+        "channel": esc(channel),
+    }
 
 
-# ----------------------------------------------------------------- uslublar
-
-def style_arc(poster, title, meta):
-    """1-uslub: chapda doira yoyi bilan kesilgan poster, o'ngda matn."""
-    img = backdrop(poster)
-
-    # Yoy to'liq balandlikni qoplashi uchun radius H/2 dan katta bo'lishi
-    # kerak — shunda tepa va past chetlari kadrda kesiladi.
-    cx, r = 400, 385
-    right = cx + r                       # yoyning eng o'ng nuqtasi
-
-    mask = Image.new("L", (W, H), 0)
-    md = ImageDraw.Draw(mask)
-    md.rectangle([0, 0, cx, H], fill=255)
-    md.ellipse([cx - r, H // 2 - r, cx + r, H // 2 + r], fill=255)
-
-    panel = cover(poster, right, H)
-    img.paste(panel, (0, 0), mask.crop((0, 0, panel.width, panel.height)))
-
-    d = ImageDraw.Draw(img)
-    d.arc([cx - r, H // 2 - r, cx + r, H // 2 + r], start=-90, end=90,
-          fill=RED, width=9)
-
-    x0 = right + 55
-    avail = W - x0 - 55
-
-    lines, font = fit_lines(d, title.upper(), FONT_HEAVY, avail, max_lines=3, start=56)
-    line_h = text_size(d, "AJ", font)[1] + 20
-    y = H // 2 - (line_h * len(lines)) // 2 - 42
-
-    for line in lines:
-        w, _ = text_size(d, line, font)
-        d.rectangle([x0 - 14, y - 12, x0 + w + 14, y + line_h - 6], fill=RED)
-        d.text((x0, y - 2), line, font=font, fill=WHITE)
-        y += line_h + 6
-
-    mf = fit_one(d, meta, FONT_BOLD, avail, start=22)
-    d.text((x0, y + 12), meta, font=mf, fill=(212, 216, 224))
-
-    bf = fit_one(d, BRAND, FONT_HEAVY, avail - 28, start=19)
-    bw, bh = text_size(d, BRAND, bf)
-    by = H - 72
-    d.rectangle([x0 - 14, by - 11, x0 + bw + 14, by + bh + 13], fill=WHITE)
-    d.text((x0, by), BRAND, font=bf, fill=DARK)
-
-    return img
+def shoot(chrome, html_path, png_path):
+    cmd = [
+        chrome, "--headless", "--disable-gpu", "--hide-scrollbars",
+        "--force-device-scale-factor=1", "--default-background-color=00000000",
+        "--virtual-time-budget=4000",
+        "--screenshot=" + png_path,
+        "--window-size=%d,%d" % (W, H),
+        "file://" + html_path,
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if not os.path.exists(png_path):
+        raise RuntimeError("Chrome surat yasamadi:\n" + res.stderr[-600:])
 
 
-def style_diagonal(poster, title, meta):
-    """2-uslub: diagonal kesim, chapda poster, o'ngda matn."""
-    img = backdrop(poster)
-
-    top_x, bottom_x = 620, 430
-
-    mask = Image.new("L", (W, H), 0)
-    md = ImageDraw.Draw(mask)
-    md.polygon([(0, 0), (top_x, 0), (bottom_x, H), (0, H)], fill=255)
-
-    panel = cover(poster, top_x, H)
-    img.paste(panel, (0, 0), mask.crop((0, 0, panel.width, panel.height)))
-
-    d = ImageDraw.Draw(img)
-    d.line([(top_x, 0), (bottom_x, H)], fill=RED, width=9)
-
-    x0 = top_x + 70
-    avail = W - x0 - 55
-
-    lines, font = fit_lines(d, title.upper(), FONT_HEAVY, avail, max_lines=3, start=58)
-    line_h = text_size(d, "AJ", font)[1] + 16
-    y = H // 2 - (line_h * len(lines)) // 2 - 34
-
-    for line in lines:
-        d.text((x0, y), line, font=font, fill=WHITE)
-        y += line_h
-
-    d.rectangle([x0, y + 18, x0 + 84, y + 26], fill=RED)
-
-    mf = fit_one(d, meta, FONT_BOLD, avail, start=23)
-    d.text((x0, y + 46), meta, font=mf, fill=(208, 212, 222))
-
-    bf = fit_one(d, BRAND, FONT_HEAVY, avail, start=19)
-    d.text((x0, H - 60), BRAND, font=bf, fill=RED)
-
-    return img
-
-
-def style_frame(poster, title, meta):
-    """3-uslub: chapda poster kartasi, atrofida xira fon."""
-    img = backdrop(poster)
-
-    card_h = 530
-    card_w = int(card_h * 2 / 3)
-    cx0, cy0 = 80, (H - card_h) // 2
-
-    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.rectangle([cx0 + 12, cy0 + 16, cx0 + card_w + 12, cy0 + card_h + 16],
-                 fill=(0, 0, 0, 160))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(20))
-    img = Image.alpha_composite(img.convert("RGBA"), shadow).convert("RGB")
-
-    card = cover(poster, card_w, card_h)
-    img.paste(card, (cx0, cy0))
-
-    d = ImageDraw.Draw(img)
-    d.rectangle([cx0, cy0, cx0 + card_w, cy0 + card_h], outline=RED, width=5)
-
-    x0 = cx0 + card_w + 60
-    avail = W - x0 - 60
-
-    lines, font = fit_lines(d, title.upper(), FONT_HEAVY, avail, max_lines=3, start=62)
-    line_h = text_size(d, "AJ", font)[1] + 18
-    y = cy0 + 96
-
-    d.rectangle([x0, y - 32, x0 + 76, y - 24], fill=RED)
-    for line in lines:
-        d.text((x0, y), line, font=font, fill=WHITE)
-        y += line_h
-
-    mf = fit_one(d, meta, FONT_BOLD, avail, start=24)
-    d.text((x0, y + 42), meta, font=mf, fill=(208, 212, 222))
-
-    bf = fit_one(d, BRAND, FONT_HEAVY, avail - 28, start=20)
-    bw, bh = text_size(d, BRAND, bf)
-    by = cy0 + card_h - 34
-    d.rectangle([x0 - 13, by - 11, x0 + bw + 13, by + bh + 13], fill=RED)
-    d.text((x0, by), BRAND, font=bf, fill=WHITE)
-
-    return img
-
-
-STYLES = {"arc": style_arc, "diagonal": style_diagonal, "frame": style_frame}
-
-
-# ----------------------------------------------------------------- ishga tushirish
-
-def build(poster_path, out_path, title, meta, style):
-    poster = Image.open(poster_path).convert("RGB")
-    img = STYLES[style](poster, title, meta)
+def to_jpeg(png_path, out_path, quality=88):
+    from PIL import Image
+    im = Image.open(png_path).convert("RGB")
+    if im.size != (W, H):
+        im = im.resize((W, H), Image.LANCZOS)
     folder = os.path.dirname(out_path)
     if folder:
         os.makedirs(folder, exist_ok=True)
-    img.save(out_path, "JPEG", quality=88, optimize=True)
+    im.save(out_path, "JPEG", quality=quality, optimize=True)
+
+
+def build(poster_path, out_path, title, year, chrome=None, keep_html=False,
+          channel=CHANNEL):
+    chrome = chrome or find_chrome()
+    if not chrome:
+        raise SystemExit("Chrome topilmadi. Uni o'rnating yoki CHROME_PATHS ga yo'l qo'shing.")
+
+    tmp = tempfile.mkdtemp(prefix="thumbgen_")
+    html_path = os.path.join(tmp, "page.html")
+    png_path = os.path.join(tmp, "shot.png")
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(build_html(poster_path, title, year, channel))
+
+    shoot(chrome, html_path, png_path)
+    to_jpeg(png_path, out_path)
+
+    if keep_html:
+        print("     HTML: %s" % html_path)
     return out_path
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("ids", nargs="*", help="film id lari (bo'sh = hammasi)")
-    ap.add_argument("--style", default="arc", choices=sorted(STYLES))
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--keep-html", action="store_true")
+    ap.add_argument("--channel", default=CHANNEL)
     args = ap.parse_args()
 
-    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base = os.path.dirname(HERE)
     img_dir = os.path.join(base, "img")
     out_dir = os.path.join(img_dir, "wide")
 
     sys.path.insert(0, os.path.join(os.path.dirname(base), "MarvelCollectionBot"))
     import catalog
+
+    chrome = find_chrome()
+    if not chrome:
+        raise SystemExit("Chrome topilmadi — u bo'lmasa rasm chizilmaydi.")
 
     wanted = args.ids or [i for i, _ in catalog.ordered()]
     made = skipped = missing = 0
@@ -286,12 +224,14 @@ def main():
         if os.path.exists(dst) and not args.force:
             skipped += 1
             continue
-        meta = "%d  •  %s" % (movie["year"], catalog.PHASES.get(movie["phase"], ""))
-        build(src, dst, movie["title"], meta, args.style)
+        build(src, dst, movie["title"], movie["year"], chrome=chrome,
+              keep_html=args.keep_html, channel=args.channel)
         made += 1
-        print("  ✅ %s" % os.path.relpath(dst, base))
+        print("  ✅ %s  —  %s" % (mid, movie["title"]))
 
     print("\nYasaldi: %d | O'tkazildi: %d | Poster yo'q: %d" % (made, skipped, missing))
+    if missing:
+        print("Poster kutilmoqda: img/<id>.jpg (2:3)")
 
 
 if __name__ == "__main__":

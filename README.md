@@ -35,8 +35,13 @@ Ikki xil rasm ishlatiladi:
 
 Masalan `img/im1.jpg` va `img/wide/im1.jpg`.
 
-Ikkinchisi shu repoda turadi, lekin uni **bot** ishlatadi — ulashilgan
-karta chat oqimida ko'rinadi va u yerda gorizontal rasm to'g'ri chiqadi.
+**Ikkinchisini qo'lda yasash shart emas** — `tools/thumbgen.py` uni
+posterdan avtomatik chizadi (Claude Design'dagi "Marvel Video Covers"
+dizayni bo'yicha, Chrome orqali):
+
+```bash
+python3 tools/thumbgen.py
+```
 
 Rasm yo'q bo'lsa hech narsa buzilmaydi: kartada film raqami ko'rinadi,
 ulashilgan karta esa matn ko'rinishida chiqadi.
