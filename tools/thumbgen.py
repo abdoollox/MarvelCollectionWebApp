@@ -94,8 +94,11 @@ html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
   <div style="position:absolute;left:108px;top:114px;width:340px;height:510px;background:#f4f4f2"></div>
   <div style="position:absolute;left:90px;top:100px;width:340px;height:510px;background:#2a2730 center/cover no-repeat;background-image:url('%(poster)s')"></div>
 
-  <!-- Yil, nom, chiziq -->
-  <div id="l-text" style="position:absolute;left:544px;top:0;bottom:164px;right:72px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+  <!-- Yil, nom, chiziq.
+       Maydon posterning aynan balandligida (100..610) — shunda matnning
+       markazi poster markazi bilan bir xil bo'ladi. Avval maydon 0..556
+       edi va matn ko'zga 77px yuqorida turardi. -->
+  <div id="l-text" style="position:absolute;left:544px;top:100px;bottom:110px;right:72px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
     <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:30px;letter-spacing:6px;color:#15151a;background:#f4f4f2;padding:12px 20px 10px;margin-bottom:26px">%(year)s</div>
     <div id="title" style="font-size:96px;line-height:0.86;letter-spacing:2px;color:#f5f5f3;text-transform:uppercase">%(title)s</div>
     <div style="width:100%%;height:5px;background:#f4f4f2;margin-top:30px"></div>
