@@ -125,6 +125,18 @@ body{
 .saga-name{font-size:16px;font-weight:800;letter-spacing:-.3px}
 .saga-count{font-size:11px;color:var(--dim);font-weight:600}
 
+.saga-note{
+  margin:12px 0 2px;padding:12px 13px;
+  background:var(--bg2);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:12px;
+  font-size:12.5px;line-height:1.55;color:var(--dim);
+}
+.saga-note b{color:var(--text)}
+.saga-note .note-h{
+  display:block;color:var(--text);font-weight:800;
+  font-size:13px;margin-bottom:4px;
+}
+
 .phase{
   margin:20px 0 10px;
   display:flex;align-items:center;gap:9px;
@@ -1014,7 +1026,8 @@ body{
       return;
     }
     if (votedFor(id)) {
-      showToast("Siz bu filmga allaqachon ovoz bergansiz");
+      showToast("Siz ovoz bergansiz · " + voteCount(id) + "/" + votes.goal
+                + " — yana " + Math.max(0, votes.goal - voteCount(id)) + " ta kerak");
       return;
     }
 
@@ -1034,7 +1047,12 @@ body{
         if (!votedFor(id)) { votes.mine.push(id); }
         votesReady = true;
         haptic("impact");
-        showToast("✅ Ovozingiz qabul qilindi — " + title, "ok");
+        var left = Math.max(0, votes.goal - d.count);
+        showToast(left
+          ? "✅ Ovozingiz qabul qilindi · " + d.count + "/" + votes.goal
+            + " — yana " + left + " ta ovoz kerak"
+          : "🎯 " + title + " kerakli ovozni to'pladi! Tez orada qo'shiladi",
+          "ok");
         renderCatalog();
         return;
       }
@@ -1043,7 +1061,8 @@ body{
       if (err === "already") {
         if (typeof d.count === "number") { votes.counts[id] = d.count; }
         if (!votedFor(id)) { votes.mine.push(id); }
-        showToast("Siz bu filmga allaqachon ovoz bergansiz");
+        showToast("Siz ovoz bergansiz · " + voteCount(id) + "/" + votes.goal
+                  + " — yana " + Math.max(0, votes.goal - voteCount(id)) + " ta kerak");
         renderCatalog();
         return;
       }
@@ -1128,6 +1147,26 @@ body{
     return true;
   }
 
+function lockedNote() {
+    var box = document.createElement("div");
+    box.className = "saga-note";
+
+    var h = document.createElement("span");
+    h.className = "note-h";
+    h.textContent = "🔒 Bu filmlar hali kolleksiyada yo'q";
+    box.appendChild(h);
+
+    box.appendChild(document.createTextNode("Qaysi film ko'proq kerakligini "
+      + "o'zingiz hal qilasiz. Film "));
+    var b = document.createElement("b");
+    b.textContent = votes.goal + " ta ovoz";
+    box.appendChild(b);
+    box.appendChild(document.createTextNode(" yig'sa, biz uni kolleksiyaga "
+      + "qo'shamiz. Kerakli filmni bosib ovoz bering — har bir filmga bir marta."));
+
+    return box;
+  }
+
   function renderCards() {
     var body = $("catalog-body");
     body.innerHTML = "";
@@ -1151,6 +1190,11 @@ body{
       head.appendChild(nm);
       head.appendChild(ct);
       body.appendChild(head);
+
+      // Yopiq film bo'lsa — qoidani tushuntiramiz
+      if (visible.some(function (m) { return !ready(m.id); })) {
+        body.appendChild(lockedNote());
+      }
 
       saga.phases.forEach(function (p) {
         var all = inPhase(p);
