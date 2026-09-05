@@ -721,7 +721,12 @@ body{
     var img = new Image();
     img.onload = function () {
       el.style.backgroundImage = 'url("' + poster(m.id) + '")';
-      el.innerHTML = "";
+      // FAQAT zaxira raqamni olib tashlaymiz. Avval bu yerda butun ichki
+      // qism tozalanardi (innerHTML = "") va poster yuklangan zahoti
+      // galochka bilan "TEZ ORADA" yorlig'i ham o'chib ketardi. Posterlar
+      // yo'q paytda onload ishlamagani uchun xato ko'rinmagan.
+      var num = el.querySelector("[data-fallback]");
+      if (num && num.parentNode) { num.parentNode.removeChild(num); }
     };
     img.src = poster(m.id);
   }
@@ -735,6 +740,7 @@ body{
 
     var num = document.createElement("span");
     num.className = "art-num";
+    num.setAttribute("data-fallback", "1");
     num.textContent = m.n;
     art.appendChild(num);
     setArt(art, m);
@@ -866,7 +872,11 @@ body{
 
     var art = $("next-art");
     art.style.backgroundImage = "";
-    art.textContent = m.n;
+    art.innerHTML = "";
+    var nextNum = document.createElement("span");
+    nextNum.setAttribute("data-fallback", "1");
+    nextNum.textContent = m.n;
+    art.appendChild(nextNum);
     setArt(art, m);
 
     $("next-title").textContent = m[lang] || m.uz;
