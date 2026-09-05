@@ -225,20 +225,43 @@ body{
 
 /* ---------- Xabar oynasi ---------- */
 
-.toast{
-  position:fixed;left:50%;bottom:26px;
-  transform:translateX(-50%) translateY(18px);
+/* Xabarlar ekranning pastida to'planadi — sahifa qayerda bo'lsa ham
+   ko'rinadi. Nishon xabari ham shu yerga tushadi: avval u faqat
+   katalog tepasidagi tasmada chiqardi va pastga tushgan odam ko'rmasdi. */
+.notes{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+  z-index:80;display:flex;flex-direction:column;gap:9px;
+  align-items:center;width:max-content;max-width:88%;
+  pointer-events:none;
+}
+
+.note{
   background:var(--card);border:1px solid var(--line);
   border-radius:14px;padding:12px 18px;
   font-size:13.5px;font-weight:600;line-height:1.35;color:var(--text);
   box-shadow:0 10px 30px rgba(0,0,0,.55);
-  z-index:80;opacity:0;pointer-events:none;
-  max-width:86%;text-align:center;
+  opacity:0;transform:translateY(14px);
   transition:opacity .22s ease,transform .22s ease;
+  text-align:center;max-width:100%;
 }
-.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-.toast.ok{border-color:var(--ok)}
-.toast.err{border-color:var(--accent)}
+.note.on{opacity:1;transform:translateY(0)}
+.note.ok{border-color:var(--ok)}
+.note.err{border-color:var(--accent)}
+
+/* Nishon xabari — bosiladigan va ko'zga tashlanadigan */
+.note-badge{
+  display:flex;align-items:center;gap:12px;text-align:left;
+  padding:12px 16px;cursor:pointer;pointer-events:auto;
+  border-color:#f0b429;
+  background:linear-gradient(135deg,rgba(240,180,41,.18),var(--card));
+  box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 22px rgba(240,180,41,.22);
+}
+.note-badge .n-ico{font-size:26px;flex:none}
+.note-badge .n-kick{
+  display:block;font-size:9.5px;letter-spacing:1.2px;
+  color:#f0b429;font-weight:800;
+}
+.note-badge .n-name{display:block;font-size:14.5px;font-weight:700;margin-top:1px}
 
 /* ---------- Nishonlar ---------- */
 
@@ -446,7 +469,7 @@ body{
 
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="notes" id="notes"></div>
 
 <div class="sheet-wrap hidden" id="sheet">
   <div class="sheet-bg" id="sheet-bg"></div>
@@ -694,15 +717,61 @@ body{
 
   /* ---------- Xabar oynasi ---------- */
 
-  var toastTimer = null;
+  // Xabarlar bir-birini o'chirmaydi: film yuborilgani va nishon ochilgani
+  // bir vaqtda bo'lishi mumkin, ikkalasi ham ko'rinishi kerak.
+  function addNote(el, life) {
+    var box = $("notes");
+    if (!box) { return null; }
+    box.appendChild(el);
+    // Brauzer o'lchamni hisoblab ulgursin, keyin ochamiz
+    setTimeout(function () { el.classList.add("on"); }, 20);
+    setTimeout(function () { dismissNote(el); }, life);
+    return el;
+  }
+
+  // Xabarni vaqtidan oldin yopadi. "Yuborilmoqda…" natija kelgach
+  // qolib ketmasligi uchun kerak.
+  function dismissNote(el) {
+    if (!el || !el.parentNode) { return; }
+    el.classList.remove("on");
+    setTimeout(function () {
+      if (el.parentNode) { el.parentNode.removeChild(el); }
+    }, 260);
+  }
 
   function showToast(text, kind) {
-    var el = $("toast");
-    if (!el) { return; }
+    var el = document.createElement("div");
+    el.className = "note" + (kind ? " " + kind : "");
     el.textContent = text;
-    el.className = "toast on" + (kind ? " " + kind : "");
-    if (toastTimer) { clearTimeout(toastTimer); }
-    toastTimer = setTimeout(function () { el.className = "toast"; }, 3400);
+    return addNote(el, 3400);
+  }
+
+  function showBadgeNote(badge) {
+    var el = document.createElement("div");
+    el.className = "note note-badge";
+
+    var ico = document.createElement("span");
+    ico.className = "n-ico";
+    ico.textContent = badge.icon;
+
+    var body = document.createElement("span");
+    var kick = document.createElement("span");
+    kick.className = "n-kick";
+    kick.textContent = "YANGI NISHON";
+    var name = document.createElement("span");
+    name.className = "n-name";
+    name.textContent = badge.name;
+    body.appendChild(kick);
+    body.appendChild(name);
+
+    el.appendChild(ico);
+    el.appendChild(body);
+    el.addEventListener("click", function () {
+      if (el.parentNode) { el.parentNode.removeChild(el); }
+      openProfile();
+    });
+
+    addNote(el, 6000);
   }
 
   /* ---------- Film so'rash ---------- */
@@ -734,7 +803,7 @@ body{
     if (!initData || !window.fetch) { openInBot(id); return; }
 
     sending = true;
-    showToast("⏳ Yuborilmoqda…");
+    var pending = showToast("⏳ Yuborilmoqda…");
 
     window.fetch(API_SEND, {
       method: "POST",
@@ -747,6 +816,7 @@ body{
       return r.json();
     }).then(function (res) {
       sending = false;
+      dismissNote(pending);
 
       if (res && res.ok) {
         // Galochka endi HAQIQIY: film chindan yuborilgandan keyin qo'yiladi
@@ -771,6 +841,7 @@ body{
       openInBot(id);
     })["catch"](function () {
       sending = false;
+      dismissNote(pending);
       openInBot(id);
     });
   }
@@ -1125,8 +1196,15 @@ body{
     if (fresh.length || now.length !== was.length) { writeSeenBadges(now); }
     if (!fresh.length) { return; }
 
-    showUnlock(fresh[fresh.length - 1]);
+    var id = fresh[fresh.length - 1];
+    showUnlock(id);
     haptic("impact");
+
+    // Tasma katalog tepasida — pastga tushgan odam uni ko'rmaydi.
+    // Shuning uchun ekranga ham chiqaramiz. Film yuborilgani haqidagi
+    // xabar oldin ko'rinsin deb biroz kechiktiramiz.
+    var b = findBadge(id);
+    if (b) { setTimeout(function () { showBadgeNote(b); }, 700); }
   }
 
   function showUnlock(id) {
