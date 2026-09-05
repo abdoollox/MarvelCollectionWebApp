@@ -24,14 +24,24 @@ GitHub'ga push qiling, so'ng: **Settings → Pages → Branch: `main` / root**.
 Manzil: `https://<username>.github.io/MarvelCollectionWebApp/`
 Shu manzilni `MarvelCollectionBot/.env` dagi `WEBAPP_URL` ga yozing.
 
-## Posterlar
+## Rasmlar
 
-`img/<id>.jpg` — masalan `img/im1.jpg`, `img/av4.jpg`.
+Ikki xil rasm ishlatiladi:
 
-Poster yo'q bo'lsa karta buzilmaydi: o'rniga film raqami ko'rinadi.
-Ya'ni posterlarni keyin, bittalab qo'shsangiz ham bo'ladi.
+| Papka | Nisbat | Qayerda |
+|---|---|---|
+| `img/<id>.jpg` | **2:3** vertikal | Shu WebApp katalogidagi kartalar |
+| `img/wide/<id>.jpg` | **16:9** gorizontal | Botdan ulashilgan karta |
 
-Tavsiya: 2:3 nisbat (masalan 400×600), 60–120 KB.
+Masalan `img/im1.jpg` va `img/wide/im1.jpg`.
+
+Ikkinchisi shu repoda turadi, lekin uni **bot** ishlatadi — ulashilgan
+karta chat oqimida ko'rinadi va u yerda gorizontal rasm to'g'ri chiqadi.
+
+Rasm yo'q bo'lsa hech narsa buzilmaydi: kartada film raqami ko'rinadi,
+ulashilgan karta esa matn ko'rinishida chiqadi.
+
+To'liq ro'yxat va o'lchamlar: [img/README.md](img/README.md)
 
 ## Nishonlar
 
