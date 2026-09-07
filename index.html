@@ -271,6 +271,16 @@ body{
 .note.ok{border-color:var(--ok)}
 .note.err{border-color:var(--accent)}
 
+/* Bekor qilish taklifi — tugmasi bosiladigan bo'lishi kerak */
+.note-undo{display:flex;align-items:center;gap:12px;pointer-events:auto}
+.note-undo .u-txt{flex:1;text-align:left}
+.note-undo .u-btn{
+  flex:none;border:0;background:transparent;cursor:pointer;
+  font-family:inherit;font-size:12.5px;font-weight:800;letter-spacing:.3px;
+  color:var(--accent);padding:4px 2px;
+}
+.note-undo .u-btn:active{opacity:.6}
+
 /* Nishon xabari — bosiladigan va ko'zga tashlanadigan */
 .note-badge{
   display:flex;align-items:center;gap:12px;text-align:left;
@@ -578,6 +588,7 @@ body{
   var API_RATING = "https://bot.tizimshunos.uz/marvel/api/rating";
   var API_VOTES  = "https://bot.tizimshunos.uz/marvel/api/votes";
   var API_VOTE   = "https://bot.tizimshunos.uz/marvel/api/vote";
+  var API_UNDO   = "https://bot.tizimshunos.uz/marvel/api/undo";
   var KEY = "marvel_watched";
   var LANG_KEY = "marvel_lang";
   var BADGE_KEY = "marvel_badges_seen";   // qaysi nishonlar allaqachon nishonlangan
@@ -786,17 +797,6 @@ body{
   }
 
   // Kartaga bosilganda tasdiq so'raladi — tasodifiy teginishdan himoya
-  function askPlay(id, title) {
-    var msg = '"' + title + '" filmini ochamizmi?';
-    if (tg && tg.showConfirm) {
-      tg.showConfirm(msg, function (ok) { if (ok) { play(id); } });
-      return;
-    }
-    var ok = true;
-    try { if (window.confirm) { ok = window.confirm(msg); } } catch (e) {}
-    if (ok) { play(id); }
-  }
-
   /* ---------- Xabar oynasi ---------- */
 
   // Xabarlar bir-birini o'chirmaydi: film yuborilgani va nishon ochilgani
@@ -826,6 +826,65 @@ body{
     el.className = "note" + (kind ? " " + kind : "");
     el.textContent = text;
     return addNote(el, 3400);
+  }
+
+  // Film yuborilgach chiqadigan xabar. Tasdiq oynasi o'rniga shu:
+  // to'g'ri bosgan odam to'siqni sezmaydi, xato bosgan qaytara oladi.
+  function showUndoNote(id, title, messageId) {
+    var el = document.createElement("div");
+    el.className = "note ok note-undo";
+
+    var txt = document.createElement("span");
+    txt.className = "u-txt";
+    txt.textContent = "✅ " + title + " — botga yuborildi";
+
+    var btn = document.createElement("button");
+    btn.className = "u-btn";
+    btn.textContent = "BEKOR QILISH";
+
+    el.appendChild(txt);
+    el.appendChild(btn);
+
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      btn.textContent = "…";
+      undoSend(id, messageId, el);
+    });
+
+    return addNote(el, 7000);
+  }
+
+  function undoSend(id, messageId, noteEl) {
+    var init = initData();
+    if (!init || !window.fetch || !messageId) {
+      dismissNote(noteEl);
+      showToast("Bekor qilib bo'lmadi", "err");
+      return;
+    }
+
+    window.fetch(API_UNDO, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": init
+      },
+      body: JSON.stringify({ message_id: messageId })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      dismissNote(noteEl);
+      if (d && d.ok) {
+        unmarkSeen(id);
+        persist();
+        haptic("select");
+        showToast("Bekor qilindi");
+        return;
+      }
+      showToast(d && d.error === "expired"
+        ? "Vaqti o'tdi — filmni chatdan o'zingiz o'chiring"
+        : "Bekor qilib bo'lmadi", "err");
+    })["catch"](function () {
+      dismissNote(noteEl);
+      showToast("Bekor qilib bo'lmadi", "err");
+    });
   }
 
   function showBadgeNote(badge) {
@@ -873,6 +932,13 @@ body{
     renderCatalog();
   }
 
+  // Faqat bekor qilish uchun. Odatda galochka qaytarilmaydi — bu
+  // xato bosilgan filmni tozalashning yagona yo'li.
+  function unmarkSeen(id) {
+    delete watched[key(id)];
+    renderCatalog();
+  }
+
   var sending = false;
 
   function play(id) {
@@ -905,7 +971,7 @@ body{
         markSeen(id);
         persist();
         haptic("impact");
-        showToast("✅ " + (res.title || "Film") + " — botga yuborildi", "ok");
+        showUndoNote(id, res.title || "Film", res.message_id);
         return;
       }
 
@@ -1145,7 +1211,8 @@ body{
         castVote(m.id, m[lang] || m.uz);
         return;
       }
-      askPlay(m.id, m[lang] || m.uz);
+      // Tasdiq oynasi yo'q — o'rniga yuborilgach "Bekor qilish" chiqadi
+      play(m.id);
     });
 
     return card;
@@ -1270,7 +1337,7 @@ function lockedNote() {
 
     $("next-title").textContent = m[lang] || m.uz;
     $("next-sub").textContent = PHASE_NAME[m.p] + " • " + m.y;
-    $("next-play").onclick = function () { askPlay(m.id, m[lang] || m.uz); };
+    $("next-play").onclick = function () { play(m.id); };
   }
 
   function renderCatalog() {
@@ -1515,7 +1582,7 @@ function lockedNote() {
         row.appendChild(go);
         row.addEventListener("click", function () {
           closeSheet();
-          askPlay(id, m[lang] || m.uz);
+          play(id);
         });
       } else if (!ready(id)) {
         var soon = document.createElement("span");
