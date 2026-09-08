@@ -3,3 +3,9 @@
 # Nishonlarning xom generatsiyalari (2048px, ~83 MB) — saytga kerak emas.
 # tools/badgegen.py shulardan img/badges/<id>.png yasaydi.
 img/badges/_raw_*.png
+
+# TMDB kaliti. Repo OCHIQ — bu fayl hech qachon git ga tushmasligi kerak.
+.env
+
+# TMDB dan yuklangan xom rasmlar (katta, saytga chiqmaydi)
+img/art/_raw_*

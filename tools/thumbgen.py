@@ -76,6 +76,11 @@ def esc(text):
     return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
 
+# Dizayn 1280x720 uchun chizilgan. Boshqa nisbatda ham to'g'ri
+# ko'rinishi uchun barcha o'lchamlar balandlikka nisbatan qayta
+# hisoblanadi (k = H / 720). Kenglik ortsa — matn maydoni kengayadi.
+BASE_H = 720
+
 PAGE = """<!DOCTYPE html>
 <html><head><meta charset="utf-8"><style>
 %(fonts)s
@@ -86,7 +91,7 @@ html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
 <div id="cover" style="position:relative;width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#24242a;font-family:'Bebas Neue',Impact,sans-serif">
 
   <!-- Fon: posterning o'zi, xiralashtirilgan va qoraytirilgan -->
-  <div style="position:absolute;inset:-60px;filter:blur(38px) saturate(1) brightness(0.66)">
+  <div style="position:absolute;inset:-%(blur_pad)dpx;filter:blur(%(blur)dpx) saturate(1) brightness(0.66)">
     <div style="position:absolute;inset:0;background:#2a2730 center/cover no-repeat;background-image:url('%(poster)s')"></div>
   </div>
 
@@ -94,38 +99,34 @@ html,body{width:%(W)dpx;height:%(H)dpx;overflow:hidden;background:#15151a}
   <div style="position:absolute;inset:0;background:radial-gradient(90%% 120%% at 22%% 50%%, rgba(255,255,255,0.14) 0%%, rgba(12,12,16,0.6) 72%%)"></div>
 
   <!-- Poster ostidagi siljigan oq blok -->
-  <div style="position:absolute;left:108px;top:114px;width:340px;height:510px;background:#f4f4f2"></div>
-  <div style="position:absolute;left:90px;top:100px;width:340px;height:510px;background:#2a2730 center/cover no-repeat;background-image:url('%(poster)s')"></div>
+  <div style="position:absolute;left:%(pl2)dpx;top:%(pt2)dpx;width:%(pw)dpx;height:%(ph)dpx;background:#f4f4f2"></div>
+  <div style="position:absolute;left:%(pl)dpx;top:%(pt)dpx;width:%(pw)dpx;height:%(ph)dpx;background:#2a2730 center/cover no-repeat;background-image:url('%(poster)s')"></div>
 
-  <!-- Yil, nom, chiziq.
-       Maydon posterning aynan balandligida (100..610) — shunda matnning
-       markazi poster markazi bilan bir xil bo'ladi. Avval maydon 0..556
-       edi va matn ko'zga 77px yuqorida turardi. -->
-  <div id="l-text" style="position:absolute;left:544px;top:100px;bottom:110px;right:72px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
-    <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:30px;letter-spacing:6px;color:#15151a;background:#f4f4f2;padding:12px 20px 10px;margin-bottom:26px">%(year)s</div>
-    <div id="title" style="font-size:96px;line-height:0.86;letter-spacing:2px;color:#f5f5f3;text-transform:uppercase">%(title)s</div>
-    <div style="width:100%%;height:5px;background:#f4f4f2;margin-top:30px"></div>
+  <!-- Yil, nom, chiziq. Maydon posterning aynan balandligida —
+       shunda matnning markazi poster markazi bilan bir xil bo'ladi. -->
+  <div id="l-text" style="position:absolute;left:%(tx)dpx;top:%(pt)dpx;bottom:%(tb)dpx;right:%(tr)dpx;display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:%(fy)dpx;letter-spacing:%(ly)dpx;color:#15151a;background:#f4f4f2;padding:%(yp1)dpx %(yp2)dpx %(yp3)dpx;margin-bottom:%(ym)dpx">%(year)s</div>
+    <div id="title" style="font-size:%(ft)dpx;line-height:0.86;letter-spacing:2px;color:#f5f5f3;text-transform:uppercase">%(title)s</div>
+    <div style="width:100%%;height:%(lh)dpx;background:#f4f4f2;margin-top:%(lm)dpx"></div>
   </div>
 
-  <!-- Kanal belgisi. Markazi 584px da qat'iy turadi: logotip
-       kattalashganda ham u pastga siljimaydi. -->
-  <div style="position:absolute;left:544px;top:584px;right:72px;transform:translateY(-50%%);display:flex;align-items:center">
+  <!-- Kanal belgisi. Markazi qat'iy nuqtada turadi. -->
+  <div style="position:absolute;left:%(tx)dpx;top:%(by)dpx;right:%(tr)dpx;transform:translateY(-50%%);display:flex;align-items:center">
     %(brand)s
   </div>
 </div>
 
 <script>
 // Uzun nomlar kadrdan chiqmasin: sig'guncha kichraytiramiz.
-// Dizaynda nom qo'lda ikki qatorga bo'lingan edi, bizda 38 xil nom bor.
 (function () {
   var box = document.getElementById('l-text');
   var title = document.getElementById('title');
-  var size = 96;
+  var size = %(ft)d;
   function overflows() {
     return title.scrollWidth > title.clientWidth + 1 ||
            box.scrollHeight > box.clientHeight + 1;
   }
-  while (size > 40 && overflows()) {
+  while (size > %(ft_min)d && overflows()) {
     size -= 2;
     title.style.fontSize = size + 'px';
   }
@@ -149,24 +150,67 @@ def brand_block(channel, logo_h=None):
             'text-transform:uppercase">%s</div></div>' % esc(channel))
 
 
-def build_html(poster_path, title, year, channel=CHANNEL, logo_h=None):
-    return PAGE % {
-        "W": W, "H": H,
+def layout(size):
+    """Dizayn o'lchamlarini kadr balandligiga moslaydi."""
+    w, h = size
+    k = h / float(BASE_H)
+
+    def p(v):
+        return int(round(v * k))
+
+    d = {
+        "W": w, "H": h,
+        "blur_pad": p(60), "blur": p(38),
+        "pl": p(90), "pt": p(100), "pl2": p(108), "pt2": p(114),
+        "pw": p(340), "ph": p(510),
+        "tx": p(544), "tb": p(110), "tr": p(72),
+        "fy": p(30), "ly": p(6),
+        "yp1": p(12), "yp2": p(20), "yp3": p(10), "ym": p(26),
+        "ft": p(96), "ft_min": p(40),
+        "lh": max(2, p(5)), "lm": p(30),
+        "by": p(584),
+    }
+
+    # Kadr 16:9 dan kengroq bo'lsa (kino formati 2.4:1 kabi), balandlik
+    # bo'yicha kichraytirilgan elementlar juda mayda bo'lib qoladi va
+    # o'ng tomonda bo'sh joy ortib ketadi. Shuning uchun ularni biroz
+    # kattalashtiramiz va vertikal markazga tekislaymiz.
+    wide = (w / float(h)) / (1280 / float(BASE_H))
+    if wide > 1.05:
+        boost = min(1.25, 1 + (wide - 1) * 0.45)
+        for key in ("pw", "ph", "ft", "fy", "yp1", "yp2", "yp3", "ym", "lm"):
+            d[key] = int(round(d[key] * boost))
+        d["pt"] = int(round((h - d["ph"]) / 2))
+        d["pt2"] = d["pt"] + p(14)
+        d["by"] = int(round(h * 0.80))
+        d["tb"] = int(round(h * 0.20))
+
+    return d
+
+
+def build_html(poster_path, title, year, channel=CHANNEL, logo_h=None,
+               size=None):
+    size = size or (W, H)
+    data = layout(size)
+    data.update({
         "fonts": font_css(),
         "poster": data_uri(poster_path, "image/jpeg"),
         "title": esc(title),
         "year": esc(str(year)),
-        "brand": brand_block(channel, logo_h),
-    }
+        "brand": brand_block(channel, logo_h or int(round(
+            LOGO_H * size[1] / float(BASE_H)))),
+    })
+    return PAGE % data
 
 
-def shoot(chrome, html_path, png_path):
+def shoot(chrome, html_path, png_path, size=None):
+    w, h = size or (W, H)
     cmd = [
         chrome, "--headless", "--disable-gpu", "--hide-scrollbars",
         "--force-device-scale-factor=1", "--default-background-color=00000000",
         "--virtual-time-budget=4000",
         "--screenshot=" + png_path,
-        "--window-size=%d,%d" % (W, H),
+        "--window-size=%d,%d" % (w, h),
         "file://" + html_path,
     ]
     res = subprocess.run(cmd, capture_output=True, text=True)
@@ -174,11 +218,12 @@ def shoot(chrome, html_path, png_path):
         raise RuntimeError("Chrome surat yasamadi:\n" + res.stderr[-600:])
 
 
-def to_jpeg(png_path, out_path, quality=88):
+def to_jpeg(png_path, out_path, quality=88, size=None):
     from PIL import Image
+    target = size or (W, H)
     im = Image.open(png_path).convert("RGB")
-    if im.size != (W, H):
-        im = im.resize((W, H), Image.LANCZOS)
+    if im.size != target:
+        im = im.resize(target, Image.LANCZOS)
     folder = os.path.dirname(out_path)
     if folder:
         os.makedirs(folder, exist_ok=True)
@@ -186,7 +231,7 @@ def to_jpeg(png_path, out_path, quality=88):
 
 
 def build(poster_path, out_path, title, year, chrome=None, keep_html=False,
-          channel=CHANNEL, logo_h=None):
+          channel=CHANNEL, logo_h=None, size=None):
     chrome = chrome or find_chrome()
     if not chrome:
         raise SystemExit("Chrome topilmadi. Uni o'rnating yoki CHROME_PATHS ga yo'l qo'shing.")
@@ -195,10 +240,10 @@ def build(poster_path, out_path, title, year, chrome=None, keep_html=False,
     html_path = os.path.join(tmp, "page.html")
     png_path = os.path.join(tmp, "shot.png")
     with open(html_path, "w", encoding="utf-8") as f:
-        f.write(build_html(poster_path, title, year, channel, logo_h))
+        f.write(build_html(poster_path, title, year, channel, logo_h, size))
 
-    shoot(chrome, html_path, png_path)
-    to_jpeg(png_path, out_path)
+    shoot(chrome, html_path, png_path, size)
+    to_jpeg(png_path, out_path, size=size)
 
     if keep_html:
         print("     HTML: %s" % html_path)
