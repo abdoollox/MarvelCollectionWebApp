@@ -493,7 +493,7 @@ body{
 
       <div class="prog">
         <div class="prog-top">
-          <span class="prog-lbl" id="prog-lbl">Ko'rilgan filmlar</span>
+          <span class="prog-lbl" id="prog-lbl">Ko'rilganlar</span>
           <span class="prog-val"><b id="prog-done">0</b> / <span id="prog-total">0</span></span>
         </div>
         <div class="bar"><span id="prog-fill"></span></div>
@@ -619,66 +619,101 @@ body{
     { id: "multiverse", name: "Multikoinot sagasi", phases: [4, 5, 6] }
   ];
 
+  // Yozuv turi: film (belgisiz), serial, animatsiya, maxsus taqdimot.
+  // catalog.py dagi "kind" dan keladi (tools/webappdata.py yasaydi).
+  var KIND_NAME = { s: "Serial", a: "Animatsiya", m: "Maxsus" };
+
   var PHASE_NAME = { 1:"1-FAZA", 2:"2-FAZA", 3:"3-FAZA", 4:"4-FAZA", 5:"5-FAZA", 6:"6-FAZA" };
 
   var MOVIES = [
-    { id:"im1",      n:1,  p:1, y:2008, uz:"Temir odam" },
-    { id:"hulk",     n:2,  p:1, y:2008, uz:"Aql bovar qilmas Halk" },
-    { id:"im2",      n:3,  p:1, y:2010, uz:"Temir odam 2" },
-    { id:"thor1",    n:4,  p:1, y:2011, uz:"Tor" },
-    { id:"ca1",      n:5,  p:1, y:2011, uz:"Kapitan Amerika: Birinchi qasoskor" },
-    { id:"av1",      n:6,  p:1, y:2012, uz:"Qasoskorlar" },
+    { id:"im1",            n:1,    p:1, y:2008, uz:"Temir odam" },
+    { id:"hulk",           n:2,    p:1, y:2008, uz:"Aql bovar qilmas Halk" },
+    { id:"im2",            n:3,    p:1, y:2010, uz:"Temir odam 2" },
+    { id:"thor1",          n:4,    p:1, y:2011, uz:"Tor" },
+    { id:"ca1",            n:5,    p:1, y:2011, uz:"Kapitan Amerika: Birinchi qasoskor" },
+    { id:"av1",            n:6,    p:1, y:2012, uz:"Qasoskorlar" },
 
-    { id:"im3",      n:7,  p:2, y:2013, uz:"Temir odam 3" },
-    { id:"thor2",    n:8,  p:2, y:2013, uz:"Tor: Qorong'u olam" },
-    { id:"ca2",      n:9,  p:2, y:2014, uz:"Kapitan Amerika: Qish askari" },
-    { id:"gotg1",    n:10, p:2, y:2014, uz:"Galaktika qo'riqchilari" },
-    { id:"av2",      n:11, p:2, y:2015, uz:"Qasoskorlar: Ultron davri" },
-    { id:"antman1",  n:12, p:2, y:2015, uz:"Chumoli-odam" },
+    { id:"im3",            n:7,    p:2, y:2013, uz:"Temir odam 3" },
+    { id:"thor2",          n:8,    p:2, y:2013, uz:"Tor: Qorong'u olam" },
+    { id:"ca2",            n:9,    p:2, y:2014, uz:"Kapitan Amerika: Qish askari" },
+    { id:"gotg1",          n:10,   p:2, y:2014, uz:"Galaktika qo'riqchilari" },
+    { id:"av2",            n:11,   p:2, y:2015, uz:"Qasoskorlar: Ultron davri" },
+    { id:"antman1",        n:12,   p:2, y:2015, uz:"Chumoli-odam" },
 
-    { id:"ca3",      n:13, p:3, y:2016, uz:"Kapitan Amerika: Fuqarolar urushi" },
-    { id:"ds1",      n:14, p:3, y:2016, uz:"Doktor Streyndj" },
-    { id:"gotg2",    n:15, p:3, y:2017, uz:"Galaktika qo'riqchilari 2" },
-    { id:"sm1",      n:16, p:3, y:2017, uz:"O'rgimchak-odam: Uyga qaytish" },
-    { id:"thor3",    n:17, p:3, y:2017, uz:"Tor: Ragnaryok" },
-    { id:"bp1",      n:18, p:3, y:2018, uz:"Qora Panter" },
-    { id:"av3",      n:19, p:3, y:2018, uz:"Qasoskorlar: Cheksizlik urushi" },
-    { id:"antman2",  n:20, p:3, y:2018, uz:"Chumoli-odam va Ari" },
-    { id:"cm1",      n:21, p:3, y:2019, uz:"Kapitan Marvel" },
-    { id:"av4",      n:22, p:3, y:2019, uz:"Qasoskorlar: Final" },
-    { id:"sm2",      n:23, p:3, y:2019, uz:"O'rgimchak-odam: Uydan uzoqda" },
+    { id:"ca3",            n:13,   p:3, y:2016, uz:"Kapitan Amerika: Fuqarolar urushi" },
+    { id:"ds1",            n:14,   p:3, y:2016, uz:"Doktor Streyndj" },
+    { id:"gotg2",          n:15,   p:3, y:2017, uz:"Galaktika qo'riqchilari 2" },
+    { id:"sm1",            n:16,   p:3, y:2017, uz:"O'rgimchak-odam: Uyga qaytish" },
+    { id:"thor3",          n:17,   p:3, y:2017, uz:"Tor: Ragnaryok" },
+    { id:"bp1",            n:18,   p:3, y:2018, uz:"Qora Panter" },
+    { id:"av3",            n:19,   p:3, y:2018, uz:"Qasoskorlar: Cheksizlik urushi" },
+    { id:"antman2",        n:20,   p:3, y:2018, uz:"Chumoli-odam va Ari" },
+    { id:"cm1",            n:21,   p:3, y:2019, uz:"Kapitan Marvel" },
+    { id:"av4",            n:22,   p:3, y:2019, uz:"Qasoskorlar: Final" },
+    { id:"sm2",            n:23,   p:3, y:2019, uz:"O'rgimchak-odam: Uydan uzoqda" },
 
-    { id:"bw",       n:24, p:4, y:2021, uz:"Qora Beva" },
-    { id:"shangchi", n:25, p:4, y:2021, uz:"Shang-Chi va o'n uzuk afsonasi" },
-    { id:"eternals", n:26, p:4, y:2021, uz:"Abadiylar" },
-    { id:"sm3",      n:27, p:4, y:2021, uz:"O'rgimchak-odam: Uyga yo'l yo'q" },
-    { id:"ds2",      n:28, p:4, y:2022, uz:"Doktor Streyndj: Telbalik multikoinoti" },
-    { id:"thor4",    n:29, p:4, y:2022, uz:"Tor: Sevgi va momaqaldiroq" },
-    { id:"bp2",      n:30, p:4, y:2022, uz:"Qora Panter: Vakanda abadiy" },
+    { id:"wandavision",    n:24,   p:4, y:2021, uz:"WandaVision", k:"s" },
+    { id:"falcon",         n:25,   p:4, y:2021, uz:"Lochin va Qish askari", k:"s" },
+    { id:"loki1",          n:26,   p:4, y:2021, uz:"Loki (1-mavsum)", k:"s" },
+    { id:"bw",             n:27,   p:4, y:2021, uz:"Qora Beva" },
+    { id:"whatif1",        n:28,   p:4, y:2021, uz:"Agar...? (1-mavsum)", k:"a" },
+    { id:"shangchi",       n:29,   p:4, y:2021, uz:"Shang-Chi va o'n uzuk afsonasi" },
+    { id:"eternals",       n:30,   p:4, y:2021, uz:"Abadiylar" },
+    { id:"hawkeye",        n:31,   p:4, y:2021, uz:"Hawkeye", k:"s" },
+    { id:"sm3",            n:32,   p:4, y:2021, uz:"O'rgimchak-odam: Uyga yo'l yo'q" },
+    { id:"moonknight",     n:33,   p:4, y:2022, uz:"Oy ritsari", k:"s" },
+    { id:"ds2",            n:34,   p:4, y:2022, uz:"Doktor Streyndj: Telbalik multikoinoti" },
+    { id:"msmarvel",       n:35,   p:4, y:2022, uz:"Miss Marvel", k:"s" },
+    { id:"thor4",          n:36,   p:4, y:2022, uz:"Tor: Sevgi va momaqaldiroq" },
+    { id:"groot",          n:37,   p:4, y:2022, uz:"Men Grutman", k:"a" },
+    { id:"shehulk",        n:38,   p:4, y:2022, uz:"She-Hulk: Advokat", k:"s" },
+    { id:"werewolf",       n:39,   p:4, y:2022, uz:"Tungi bo'ri", k:"m" },
+    { id:"bp2",            n:40,   p:4, y:2022, uz:"Qora Panter: Vakanda abadiy" },
+    { id:"gotgholiday",    n:41,   p:4, y:2022, uz:"Galaktika qo'riqchilari: Bayram kechasi", k:"m" },
 
-    { id:"antman3",  n:31, p:5, y:2023, uz:"Chumoli-odam va Ari: Kvantomaniya" },
-    { id:"gotg3",    n:32, p:5, y:2023, uz:"Galaktika qo'riqchilari 3" },
-    { id:"marvels",  n:33, p:5, y:2023, uz:"Marvellar" },
-    { id:"dpw",      n:34, p:5, y:2024, uz:"Dedpul va Volverin" },
-    { id:"ca4",      n:35, p:5, y:2025, uz:"Kapitan Amerika: Yangi dunyo" },
-    { id:"tbolts",   n:36, p:5, y:2025, uz:"Momaqaldiroqlar*" },
+    { id:"antman3",        n:42,   p:5, y:2023, uz:"Chumoli-odam va Ari: Kvantomaniya" },
+    { id:"gotg3",          n:43,   p:5, y:2023, uz:"Galaktika qo'riqchilari 3" },
+    { id:"invasion",       n:44,   p:5, y:2023, uz:"Maxfiy bosqin", k:"s" },
+    { id:"loki2",          n:45,   p:5, y:2023, uz:"Loki (2-mavsum)", k:"s" },
+    { id:"marvels",        n:46,   p:5, y:2023, uz:"Marvellar" },
+    { id:"whatif2",        n:47,   p:5, y:2023, uz:"Agar...? (2-mavsum)", k:"a" },
+    { id:"echo",           n:48,   p:5, y:2024, uz:"Aks-sado", k:"s" },
+    { id:"xmen97",         n:49,   p:5, y:2024, uz:"Iks-odamlar '97 (1-mavsum)", k:"a" },
+    { id:"dpw",            n:50,   p:5, y:2024, uz:"Dedpul va Volverin" },
+    { id:"agatha",         n:51,   p:5, y:2024, uz:"Agata boshidan oxirigacha", k:"s" },
+    { id:"whatif3",        n:52,   p:5, y:2024, uz:"Agar...? (3-mavsum)", k:"a" },
+    { id:"friendlysm1",    n:53,   p:5, y:2025, uz:"Mahalladagi O'rgimchak-odam (1-mavsum)", k:"a" },
+    { id:"ca4",            n:54,   p:5, y:2025, uz:"Kapitan Amerika: Yangi dunyo" },
+    { id:"dd1",            n:55,   p:5, y:2025, uz:"Daredevil: Qayta tug'ilish (1-mavsum)", k:"s" },
+    { id:"tbolts",         n:56,   p:5, y:2025, uz:"Momaqaldiroqlar*" },
+    { id:"ironheart",      n:57,   p:5, y:2025, uz:"Temir qalb", k:"s" },
 
-    { id:"ff4",      n:37, p:6, y:2025, uz:"Fantastik to'rtlik: Birinchi qadamlar" },
-    { id:"sm4",      n:38, p:6, y:2026, uz:"O'rgimchak-odam: Yangi kun" }
+    { id:"ff4",            n:58,   p:6, y:2025, uz:"Fantastik to'rtlik: Birinchi qadamlar" },
+    { id:"wakanda",        n:59,   p:6, y:2025, uz:"Vakanda ko'zlari", k:"a" },
+    { id:"zombies1",       n:60,   p:6, y:2025, uz:"Marvel zombilari (1-mavsum)", k:"a" },
+    { id:"wonderman",      n:61,   p:6, y:2025, uz:"Mo'jiza odam", k:"s" },
+    { id:"dd2",            n:62,   p:6, y:2026, uz:"Daredevil: Qayta tug'ilish (2-mavsum)", k:"s" },
+    { id:"punisher",       n:63,   p:6, y:2026, uz:"Jazolovchi: Oxirgi hukm", k:"m" },
+    { id:"sm4",            n:64,   p:6, y:2026, uz:"O'rgimchak-odam: Yangi kun" }
   ];
 
-  // Hali kanalga yuklanmagan filmlar. Bo'sh bo'lsa — hammasi tayyor.
-  // catalog.py da message_id=0 bo'lganlar shu yerga yoziladi.
-  // Hozir: Cheksizlik sagasi (23 film) tayyor, Multikoinot sagasi yo'q.
+  // Hali kanalga yuklanganlar: 23 / 64.
+  // BU BLOK QO'LDA YOZILMAYDI — tools/webappdata.py yasaydi.
   var NOT_READY = {
-    // 4-Faza
-    bw: true, shangchi: true, eternals: true, sm3: true,
-    ds2: true, thor4: true, bp2: true,
-    // 5-Faza
-    antman3: true, gotg3: true, marvels: true,
-    dpw: true, ca4: true, tbolts: true,
-    // 6-Faza
-    ff4: true, sm4: true
+    // 4-faza
+    wandavision: true, falcon: true, loki1: true, bw: true,
+    whatif1: true, shangchi: true, eternals: true, hawkeye: true,
+    sm3: true, moonknight: true, ds2: true, msmarvel: true,
+    thor4: true, groot: true, shehulk: true, werewolf: true,
+    bp2: true, gotgholiday: true,
+    // 5-faza
+    antman3: true, gotg3: true, invasion: true, loki2: true,
+    marvels: true, whatif2: true, echo: true, xmen97: true,
+    dpw: true, agatha: true, whatif3: true, friendlysm1: true,
+    ca4: true, dd1: true, tbolts: true, ironheart: true,
+    // 6-faza
+    ff4: true, wakanda: true, zombies1: true, wonderman: true,
+    dd2: true, punisher: true, sm4: true
   };
 
   // Tillar. Ikkinchisi qo'shilganda til tanlash ekrani o'zi paydo bo'ladi.
@@ -1228,7 +1263,7 @@ body{
     t.textContent = m[lang] || m.uz;
     var s = document.createElement("div");
     s.className = "meta-sub";
-    s.textContent = m.n + " • " + m.y;
+    s.textContent = m.n + " • " + m.y + (KIND_NAME[m.k] ? " • " + KIND_NAME[m.k] : "");
     meta.appendChild(t);
     meta.appendChild(s);
     if (!ready(m.id)) { meta.appendChild(voteStrip(m.id)); }
@@ -1261,16 +1296,16 @@ function lockedNote() {
 
     var h = document.createElement("span");
     h.className = "note-h";
-    h.textContent = "🔒 Bu filmlar hali kolleksiyada yo'q";
+    h.textContent = "🔒 Bular hali kolleksiyada yo'q";
     box.appendChild(h);
 
-    box.appendChild(document.createTextNode("Qaysi film ko'proq kerakligini "
-      + "o'zingiz hal qilasiz. Film "));
+    box.appendChild(document.createTextNode("Qaysi biri ko'proq kerakligini "
+      + "o'zingiz hal qilasiz. Har biri "));
     var b = document.createElement("b");
     b.textContent = votes.goal + " ta ovoz";
     box.appendChild(b);
     box.appendChild(document.createTextNode(" yig'sa, biz uni kolleksiyaga "
-      + "qo'shamiz. Kerakli filmni bosib ovoz bering — har bir filmga bir marta."));
+      + "qo'shamiz. Keraklisini bosib ovoz bering — har biriga bir marta."));
 
     return box;
   }
