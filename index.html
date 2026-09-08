@@ -181,6 +181,20 @@ body{
   pointer-events:none;
 }
 
+/* Yuklab olish belgisi. Galochka bilan bir xil joyda: film olinmaguncha
+   "yuklab olish mumkin" deb turadi, olingandan keyin galochkaga almashadi.
+   Shu orqali karta bosiladigan narsa ekani ko'rinib turadi. */
+.dl{
+  position:absolute;top:8px;right:8px;z-index:2;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(10,12,17,.72);border:1px solid rgba(255,255,255,.28);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;pointer-events:none;
+  backdrop-filter:blur(2px);
+}
+.dl svg{width:14px;height:14px;display:block}
+.card:active .dl{background:var(--accent);border-color:var(--accent)}
+
 .meta{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:9px 10px}
 .meta-title{
   font-size:12.5px;font-weight:700;line-height:1.25;
@@ -1157,6 +1171,20 @@ body{
     });
   }
 
+  // Yuklab olish belgisi. SVG — emoji platformaga qarab har xil
+  // ko'rinadi, chizilgan strelka esa hamma joyda bir xil.
+  function downloadBadge() {
+    var el = document.createElement("span");
+    el.className = "dl";
+    el.setAttribute("aria-label", "Yuklab olish");
+    el.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/>' +
+      '<path d="M4 20h16"/></svg>';
+    return el;
+  }
+
   function cardEl(m) {
     var card = document.createElement("div");
     card.className = "card" + (seen(m.id) ? " seen" : "");
@@ -1188,6 +1216,9 @@ body{
       tick.textContent = "✓";
       tick.setAttribute("aria-label", "Ko'rilgan");
       art.appendChild(tick);
+    } else if (ready(m.id)) {
+      // Hali olinmagan tayyor film — yuklab olish mumkinligini ko'rsatamiz
+      art.appendChild(downloadBadge());
     }
 
     var meta = document.createElement("div");
