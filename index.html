@@ -879,13 +879,15 @@ body{
 
   // Film yuborilgach chiqadigan xabar. Tasdiq oynasi o'rniga shu:
   // to'g'ri bosgan odam to'siqni sezmaydi, xato bosgan qaytara oladi.
-  function showUndoNote(id, title, messageId) {
+  function showUndoNote(id, title, messageId, isSeries) {
     var el = document.createElement("div");
     el.className = "note ok note-undo";
 
     var txt = document.createElement("span");
     txt.className = "u-txt";
-    txt.textContent = "✅ " + title + " — botga yuborildi";
+    txt.textContent = isSeries
+      ? "✅ " + title + " — qismlar ro'yxati botga yuborildi"
+      : "✅ " + title + " — botga yuborildi";
 
     var btn = document.createElement("button");
     btn.className = "u-btn";
@@ -1020,7 +1022,8 @@ body{
         markSeen(id);
         persist();
         haptic("impact");
-        showUndoNote(id, res.title || "Film", res.message_id);
+        // Serial bo'lsa video emas, qismlar ro'yxati boradi
+        showUndoNote(id, res.title || "Film", res.message_id, res.series);
         return;
       }
 
