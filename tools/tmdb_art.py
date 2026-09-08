@@ -103,6 +103,12 @@ def download(url, dest):
     return os.path.getsize(dest)
 
 
+# TMDB dagi nomi fayl nomidan farq qiladigan yozuvlar
+NAME_FIX = {
+    "punisher": "The Punisher: One Last Kill",
+}
+
+
 def targets():
     """Har yozuv uchun: (id, qidiruv nomi, yil, serialmi)."""
     out = []
@@ -110,6 +116,7 @@ def targets():
         if catalog.is_series(movie):
             stem = SERIES_FILES.get(mid, "")
             name = stem.split(" (")[0] if stem else movie["title"]
+            name = NAME_FIX.get(mid, name)
             out.append((mid, name, movie["year"], True))
         else:
             en = EN.get(mid)
@@ -136,12 +143,22 @@ def main():
 
         hit = cache.get(mid)
         if not hit:
-            kind = "tv" if is_tv else "movie"
-            params = {"query": name}
-            if not is_tv:
-                params["year"] = year
-            res = api(key, "/search/%s" % kind, **params)
-            items = (res or {}).get("results") or []
+            # Maxsus taqdimotlar TMDB'da ba'zan film, ba'zan serial
+            # sifatida turadi — ikkalasini ham sinaymiz.
+            kinds = ["tv", "movie"] if is_tv else ["movie", "tv"]
+            items = []
+            for kind in kinds:
+                params = {"query": name}
+                if kind == "movie":
+                    params["year"] = year
+                res = api(key, "/search/%s" % kind, **params)
+                items = (res or {}).get("results") or []
+                if not items and kind == "movie":
+                    # yilsiz qayta urinamiz
+                    res = api(key, "/search/movie", query=name)
+                    items = (res or {}).get("results") or []
+                if items:
+                    break
             if not items:
                 print("  ❌ %-13s %s — TMDB da topilmadi" % (mid, name[:34]))
                 missing += 1

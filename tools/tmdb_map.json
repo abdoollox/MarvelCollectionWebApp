@@ -1,0 +1,317 @@
+{
+ "im1": {
+  "kind": "movie",
+  "tmdb_id": 1726,
+  "tmdb_name": "Iron Man"
+ },
+ "hulk": {
+  "kind": "movie",
+  "tmdb_id": 1724,
+  "tmdb_name": "The Incredible Hulk"
+ },
+ "im2": {
+  "kind": "movie",
+  "tmdb_id": 10138,
+  "tmdb_name": "Iron Man 2"
+ },
+ "thor1": {
+  "kind": "movie",
+  "tmdb_id": 10195,
+  "tmdb_name": "Thor"
+ },
+ "ca1": {
+  "kind": "movie",
+  "tmdb_id": 1771,
+  "tmdb_name": "Captain America: The First Avenger"
+ },
+ "av1": {
+  "kind": "movie",
+  "tmdb_id": 24428,
+  "tmdb_name": "The Avengers"
+ },
+ "im3": {
+  "kind": "movie",
+  "tmdb_id": 68721,
+  "tmdb_name": "Iron Man 3"
+ },
+ "thor2": {
+  "kind": "movie",
+  "tmdb_id": 76338,
+  "tmdb_name": "Thor: The Dark World"
+ },
+ "ca2": {
+  "kind": "movie",
+  "tmdb_id": 100402,
+  "tmdb_name": "Captain America: The Winter Soldier"
+ },
+ "gotg1": {
+  "kind": "movie",
+  "tmdb_id": 118340,
+  "tmdb_name": "Guardians of the Galaxy"
+ },
+ "av2": {
+  "kind": "movie",
+  "tmdb_id": 99861,
+  "tmdb_name": "Avengers: Age of Ultron"
+ },
+ "antman1": {
+  "kind": "movie",
+  "tmdb_id": 102899,
+  "tmdb_name": "Ant-Man"
+ },
+ "ca3": {
+  "kind": "movie",
+  "tmdb_id": 271110,
+  "tmdb_name": "Captain America: Civil War"
+ },
+ "ds1": {
+  "kind": "movie",
+  "tmdb_id": 284052,
+  "tmdb_name": "Doctor Strange"
+ },
+ "gotg2": {
+  "kind": "movie",
+  "tmdb_id": 283995,
+  "tmdb_name": "Guardians of the Galaxy Vol. 2"
+ },
+ "sm1": {
+  "kind": "movie",
+  "tmdb_id": 315635,
+  "tmdb_name": "Spider-Man: Homecoming"
+ },
+ "thor3": {
+  "kind": "movie",
+  "tmdb_id": 284053,
+  "tmdb_name": "Thor: Ragnarok"
+ },
+ "bp1": {
+  "kind": "movie",
+  "tmdb_id": 284054,
+  "tmdb_name": "Black Panther"
+ },
+ "av3": {
+  "kind": "movie",
+  "tmdb_id": 299536,
+  "tmdb_name": "Avengers: Infinity War"
+ },
+ "antman2": {
+  "kind": "movie",
+  "tmdb_id": 363088,
+  "tmdb_name": "Ant-Man and the Wasp"
+ },
+ "cm1": {
+  "kind": "movie",
+  "tmdb_id": 299537,
+  "tmdb_name": "Captain Marvel"
+ },
+ "av4": {
+  "kind": "movie",
+  "tmdb_id": 299534,
+  "tmdb_name": "Avengers: Endgame"
+ },
+ "sm2": {
+  "kind": "movie",
+  "tmdb_id": 429617,
+  "tmdb_name": "Spider-Man: Far From Home"
+ },
+ "wandavision": {
+  "kind": "tv",
+  "tmdb_id": 85271,
+  "tmdb_name": "WandaVision"
+ },
+ "falcon": {
+  "kind": "tv",
+  "tmdb_id": 88396,
+  "tmdb_name": "The Falcon and the Winter Soldier"
+ },
+ "loki1": {
+  "kind": "tv",
+  "tmdb_id": 84958,
+  "tmdb_name": "Loki"
+ },
+ "bw": {
+  "kind": "movie",
+  "tmdb_id": 497698,
+  "tmdb_name": "Black Widow"
+ },
+ "whatif1": {
+  "kind": "tv",
+  "tmdb_id": 91363,
+  "tmdb_name": "What If...?"
+ },
+ "shangchi": {
+  "kind": "movie",
+  "tmdb_id": 566525,
+  "tmdb_name": "Shang-Chi and the Legend of the Ten Rings"
+ },
+ "eternals": {
+  "kind": "movie",
+  "tmdb_id": 524434,
+  "tmdb_name": "Eternals"
+ },
+ "hawkeye": {
+  "kind": "tv",
+  "tmdb_id": 88329,
+  "tmdb_name": "Hawkeye"
+ },
+ "sm3": {
+  "kind": "movie",
+  "tmdb_id": 634649,
+  "tmdb_name": "Spider-Man: No Way Home"
+ },
+ "moonknight": {
+  "kind": "tv",
+  "tmdb_id": 92749,
+  "tmdb_name": "Moon Knight"
+ },
+ "ds2": {
+  "kind": "movie",
+  "tmdb_id": 453395,
+  "tmdb_name": "Doctor Strange in the Multiverse of Madness"
+ },
+ "msmarvel": {
+  "kind": "tv",
+  "tmdb_id": 92782,
+  "tmdb_name": "Ms. Marvel"
+ },
+ "thor4": {
+  "kind": "movie",
+  "tmdb_id": 616037,
+  "tmdb_name": "Thor: Love and Thunder"
+ },
+ "groot": {
+  "kind": "tv",
+  "tmdb_id": 232125,
+  "tmdb_name": "I Am Groot"
+ },
+ "shehulk": {
+  "kind": "tv",
+  "tmdb_id": 92783,
+  "tmdb_name": "She-Hulk: Attorney at Law"
+ },
+ "bp2": {
+  "kind": "movie",
+  "tmdb_id": 505642,
+  "tmdb_name": "Black Panther: Wakanda Forever"
+ },
+ "antman3": {
+  "kind": "movie",
+  "tmdb_id": 640146,
+  "tmdb_name": "Ant-Man and the Wasp: Quantumania"
+ },
+ "gotg3": {
+  "kind": "movie",
+  "tmdb_id": 447365,
+  "tmdb_name": "Guardians of the Galaxy Vol. 3"
+ },
+ "invasion": {
+  "kind": "tv",
+  "tmdb_id": 114472,
+  "tmdb_name": "Secret Invasion"
+ },
+ "loki2": {
+  "kind": "tv",
+  "tmdb_id": 84958,
+  "tmdb_name": "Loki"
+ },
+ "marvels": {
+  "kind": "movie",
+  "tmdb_id": 609681,
+  "tmdb_name": "The Marvels"
+ },
+ "whatif2": {
+  "kind": "tv",
+  "tmdb_id": 91363,
+  "tmdb_name": "What If...?"
+ },
+ "echo": {
+  "kind": "tv",
+  "tmdb_id": 122226,
+  "tmdb_name": "Echo"
+ },
+ "dpw": {
+  "kind": "movie",
+  "tmdb_id": 533535,
+  "tmdb_name": "Deadpool & Wolverine"
+ },
+ "agatha": {
+  "kind": "tv",
+  "tmdb_id": 138501,
+  "tmdb_name": "Agatha All Along"
+ },
+ "whatif3": {
+  "kind": "tv",
+  "tmdb_id": 91363,
+  "tmdb_name": "What If...?"
+ },
+ "friendlysm1": {
+  "kind": "tv",
+  "tmdb_id": 138503,
+  "tmdb_name": "Your Friendly Neighborhood Spider-Man"
+ },
+ "ca4": {
+  "kind": "movie",
+  "tmdb_id": 822119,
+  "tmdb_name": "Captain America: Brave New World"
+ },
+ "dd1": {
+  "kind": "tv",
+  "tmdb_id": 202555,
+  "tmdb_name": "Daredevil: Born Again"
+ },
+ "tbolts": {
+  "kind": "movie",
+  "tmdb_id": 986056,
+  "tmdb_name": "Thunderbolts*"
+ },
+ "ironheart": {
+  "kind": "tv",
+  "tmdb_id": 114471,
+  "tmdb_name": "Ironheart"
+ },
+ "ff4": {
+  "kind": "movie",
+  "tmdb_id": 617126,
+  "tmdb_name": "The Fantastic 4: First Steps"
+ },
+ "wakanda": {
+  "kind": "tv",
+  "tmdb_id": 241388,
+  "tmdb_name": "Eyes of Wakanda"
+ },
+ "zombies1": {
+  "kind": "tv",
+  "tmdb_id": 138505,
+  "tmdb_name": "Marvel Zombies"
+ },
+ "wonderman": {
+  "kind": "tv",
+  "tmdb_id": 198178,
+  "tmdb_name": "Wonder Man"
+ },
+ "dd2": {
+  "kind": "tv",
+  "tmdb_id": 202555,
+  "tmdb_name": "Daredevil: Born Again"
+ },
+ "sm4": {
+  "kind": "movie",
+  "tmdb_id": 969681,
+  "tmdb_name": "Spider-Man: Brand New Day"
+ },
+ "werewolf": {
+  "kind": "movie",
+  "tmdb_id": 894205,
+  "tmdb_name": "Werewolf by Night"
+ },
+ "gotgholiday": {
+  "kind": "movie",
+  "tmdb_id": 774752,
+  "tmdb_name": "The Guardians of the Galaxy Holiday Special"
+ },
+ "punisher": {
+  "kind": "movie",
+  "tmdb_id": 1439930,
+  "tmdb_name": "The Punisher: One Last Kill"
+ }
+}
