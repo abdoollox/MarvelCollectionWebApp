@@ -63,7 +63,10 @@ EN = {
 }
 
 # Serial, to'plam va boshqa keraksiz fayllar
-SKIP = re.compile(r"(season|collection|marvel cinematic universe\.)", re.I)
+# "season" ataylab yo'q: seriallarning mavsum posterlari kerak.
+# Ular SERIES_FILES orqali aniq nom bilan topiladi, film bilan
+# chalkashmaydi (kalitida "season1" bo'lib qoladi).
+SKIP = re.compile(r"(collection|marvel cinematic universe\.)", re.I)
 
 TARGET_W, TARGET_H = 600, 900          # 2:3
 
@@ -107,9 +110,51 @@ def scan(folder):
     return out
 
 
+# Seriallar: fayl nomida " - Season N" turadi, shuning uchun nom+yil
+# bo'yicha topib bo'lmaydi (bir serialning bir necha mavsumi bor).
+# Aniq fayl nomi yozilgani ishonchliroq.
+SERIES_FILES = {
+    "wandavision": "WandaVision (2021) - Season 1",
+    "falcon":      "The Falcon and the Winter Soldier (2021) - Season 1",
+    "loki1":       "Loki (2021) - Season 1",
+    "whatif1":     "What If... (2021) - Season 1",
+    "hawkeye":     "Hawkeye (2021) - Season 1",
+    "moonknight":  "Moon Knight (2022) - Season 1",
+    "msmarvel":    "Ms. Marvel (2022) - Season 1",
+    "groot":       "I Am Groot (2022) - Season 1",
+    "shehulk":     "She-Hulk Attorney at Law (2022) - Season 1",
+    "werewolf":    "Werewolf by Night (2022)",
+    "gotgholiday": "The Guardians of the Galaxy Holiday Special (2022)",
+    "invasion":    "Secret Invasion (2023) - Season 1",
+    "loki2":       "Loki (2021) - Season 2",
+    "whatif2":     "What If... (2021) - Season 2",
+    "echo":        "Echo (2024) - Season 1",
+    "agatha":      "Agatha All Along (2024) - Season 1",
+    "whatif3":     "What If... (2021) - Season 3",
+    "friendlysm1": "Your Friendly Neighborhood Spider-Man (2025) - Season 1",
+    "dd1":         "Daredevil Born Again (2025) - Season 1",
+    "ironheart":   "Ironheart (2025) - Season 1",
+    "wakanda":     "Eyes of Wakanda (2025) - Season 1",
+    "zombies1":    "Marvel Zombies (2025) - Season 1",
+    "wonderman":   "Wonder Man (2026) - Season 1",
+    "dd2":         "Daredevil Born Again (2025) - Season 2",
+    "punisher":    "The Punisher One Last Kill (2026)",
+    # "xmen97" — bu to'plamda yo'q (Marvel Animation, MCU to'plamiga kirmagan)
+}
+
+
 def match(files):
-    """Har film uchun mos faylni topadi."""
+    """Har yozuv uchun mos faylni topadi."""
     found, missing = {}, []
+
+    by_stem = {os.path.splitext(f["file"])[0]: f for f in files}
+    for mid, stem in SERIES_FILES.items():
+        hit = by_stem.get(stem)
+        if hit:
+            found[mid] = hit
+        else:
+            missing.append(mid)
+
     for mid, (title, year) in EN.items():
         key = norm(title)
         hit = next((f for f in files if f["key"] == key and f["year"] == year), None)
@@ -153,7 +198,7 @@ def main():
     used = {f["file"] for f in found.values()}
 
     print("Papkada mos keladigan fayllar: %d ta" % len(files))
-    print("Topildi: %d / %d\n" % (len(found), len(EN)))
+    print("Topildi: %d / %d\n" % (len(found), len(EN) + len(SERIES_FILES)))
 
     for mid, movie in catalog.ordered():
         hit = found.get(mid)
